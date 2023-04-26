@@ -1,0 +1,119 @@
+package com.bassemHalim.cyclopath.Activity;
+
+
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
+import com.microsoft.playwright.*;
+import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.RequestOptions;
+import org.springframework.beans.factory.annotation.Value;
+
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * a FIT data downloader from garmin connect
+ * the downloader mimics a Browser since garmin doesn't provide access to its API
+ * the drawback is that the username and password has to be provided :(
+ *
+ * @author Bassem Halim
+ * @see <a href="https://github.com/tcgoetz/GarminDB/blob/master/garmindb/download.py">python reference repo</a>
+ */
+public class GarminDownloader implements ActivityDownloader {
+    @Value("${Garmin.USERNAME}")
+    private String Username;
+    @Value("${Garmin.PASSWORD}")
+    private String Password;
+    private String access_token;
+    private String garmin_connect_base_url = "https://connect.garmin.com";
+    private String garmin_activity_list_url = "https://connect.garmin.com/activitylist-service/activities/search/activities";
+    private Page page;
+    private BrowserContext context;
+    private Playwright playwright;
+    private Browser browser;
+    private String state;
+
+    public GarminDownloader() {
+    }
+
+    public GarminDownloader(String username, String password) {
+        Username = username;
+        Password = password;
+        playwright = Playwright.create();
+    }
+
+    @Override
+    public boolean login() {
+        // Login
+        browser = playwright.firefox().launch(new BrowserType.LaunchOptions().setSlowMo(0).setHeadless(true));
+        context = browser.newContext();
+        this.page = context.newPage();
+//        page.route("https://connect.garmin.com/activitylist-service/**", route -> {
+//            System.out.println(route.request().url());
+//            System.out.println(route.request().headers());
+//            route.resume();
+//        });
+        // sign in
+        System.out.println("signing in");
+        Response response = page.navigate("https://connect.garmin.com/signin/");
+        page.waitForTimeout(100 + Math.random() * 100);
+        FrameLocator signinFrame = page.frameLocator("#gauth-widget-frame-gauth-widget");
+        signinFrame.locator("#username").fill(this.Username);
+        page.waitForTimeout(100 + Math.random() * 100);
+        signinFrame.locator("#password").fill(this.Password);
+        page.waitForTimeout(100 + Math.random() * 100);
+        signinFrame.locator("#login-btn-signin").click();
+        page.waitForLoadState(LoadState.NETWORKIDLE);
+//        page.waitForTimeout(2000);
+        System.out.println("getting access token");
+        // get access token
+        String json = page.context().storageState();
+        Pattern pattern = Pattern.compile("access_token"); // str" "access_token\":\""
+        Matcher matcher = pattern.matcher(json);
+        if (!matcher.find()) {
+            return false;
+        }
+        this.access_token = json.substring(matcher.end() + 5, matcher.end() + 1137);
+        this.state = context.storageState();
+        System.out.println(access_token);
+        return true;
+    }
+
+    @Override
+    public List<Activity> getActivitiesList() throws IOException {
+        List<Activity> activityList = new ArrayList();
+        // get activity list
+        BrowserContext context = browser.newContext(new Browser.NewContextOptions().setStorageState(state));
+        APIResponse response1 = context.request().get(this.garmin_activity_list_url, RequestOptions.create()
+                .setQueryParam("limit", 1000)
+                .setQueryParam("start", 0)
+                .setHeader("authorization", "Bearer " + this.access_token)
+                .setHeader("di-backend", "connectapi.garmin.com")
+                .setHeader("dnt", "1")
+                .setHeader("nk", "NT")
+                .setHeader("referer", "https://connect.garmin.com/modern/activities")
+                .setHeader("x-requested-with", "XMLHttpRequest")
+        );
+        if (response1.ok()) {
+            String json = response1.text();
+//            System.out.println(json);
+            Files.write(Paths.get("activities_samples/list.json"), response1.body());
+            Type activityListType = new TypeToken<ArrayList<Activity>>() {
+            }.getType();
+            activityList = new GsonBuilder().create().fromJson(json, activityListType);
+        } else {
+            System.out.println(response1.status());
+        }
+        browser.close();
+        return activityList;
+    }
+}
+
