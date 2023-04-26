@@ -8,7 +8,11 @@ import com.google.gson.reflect.TypeToken;
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.RequestOptions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -28,6 +32,7 @@ import java.util.regex.Pattern;
  * @author Bassem Halim
  * @see <a href="https://github.com/tcgoetz/GarminDB/blob/master/garmindb/download.py">python reference repo</a>
  */
+@Service
 public class GarminDownloader implements ActivityDownloader {
     @Value("${Garmin.USERNAME}")
     private String Username;
@@ -40,7 +45,8 @@ public class GarminDownloader implements ActivityDownloader {
 
     private Page page;
     private BrowserContext context;
-    private Playwright playwright;
+    private Playwright playwright = Playwright.create();
+
     private Browser browser;
     private String state;
 
@@ -50,7 +56,6 @@ public class GarminDownloader implements ActivityDownloader {
     public GarminDownloader(String username, String password) {
         Username = username;
         Password = password;
-        playwright = Playwright.create();
     }
 
     @Override
@@ -59,11 +64,7 @@ public class GarminDownloader implements ActivityDownloader {
         browser = playwright.firefox().launch(new BrowserType.LaunchOptions().setSlowMo(0).setHeadless(true));
         context = browser.newContext();
         this.page = context.newPage();
-//        page.route("https://connect.garmin.com/activitylist-service/**", route -> {
-//            System.out.println(route.request().url());
-//            System.out.println(route.request().headers());
-//            route.resume();
-//        });
+
         // sign in
         System.out.println("signing in");
         Response response = page.navigate("https://connect.garmin.com/signin/");
