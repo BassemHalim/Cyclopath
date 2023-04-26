@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,8 +34,10 @@ public class GarminDownloader implements ActivityDownloader {
     @Value("${Garmin.PASSWORD}")
     private String Password;
     private String access_token;
-    private String garmin_connect_base_url = "https://connect.garmin.com";
-    private String garmin_activity_list_url = "https://connect.garmin.com/activitylist-service/activities/search/activities";
+    private final String garmin_connect_base_url = "https://connect.garmin.com";
+    private final String garmin_activity_list_url = "https://connect.garmin.com/activitylist-service/activities/search/activities";
+    private final String garmin_activity_download_gpx_url = "https://connect.garmin.com/download-service/export/gpx/activity/";
+
     private Page page;
     private BrowserContext context;
     private Playwright playwright;
@@ -92,7 +95,7 @@ public class GarminDownloader implements ActivityDownloader {
         List<Activity> activityList = new ArrayList();
         // get activity list
         BrowserContext context = browser.newContext(new Browser.NewContextOptions().setStorageState(state));
-        APIResponse response1 = context.request().get(this.garmin_activity_list_url, RequestOptions.create()
+        APIResponse response = context.request().get(this.garmin_activity_list_url, RequestOptions.create()
                 .setQueryParam("limit", 1000)
                 .setQueryParam("start", 0)
                 .setHeader("authorization", "Bearer " + this.access_token)
@@ -102,18 +105,46 @@ public class GarminDownloader implements ActivityDownloader {
                 .setHeader("referer", "https://connect.garmin.com/modern/activities")
                 .setHeader("x-requested-with", "XMLHttpRequest")
         );
-        if (response1.ok()) {
-            String json = response1.text();
+        if (response.ok()) {
+            String json = response.text();
 //            System.out.println(json);
-            Files.write(Paths.get("activities_samples/list.json"), response1.body());
+            Files.write(Paths.get("activities_samples/list.json"), response.body());
             Type activityListType = new TypeToken<ArrayList<Activity>>() {
             }.getType();
             activityList = new GsonBuilder().create().fromJson(json, activityListType);
         } else {
-            System.out.println(response1.status());
+            System.out.println(response.status());
         }
-        browser.close();
+//        browser.close();
         return activityList;
+    }
+
+    @Override
+    public void downloadActivity(Activity activity) {
+        Long id = activity.getActivityId();
+        System.out.println("downloading: " + id);
+        BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+                .setStorageState(state)
+                .setBaseURL(this.garmin_activity_download_gpx_url)
+        );
+        APIResponse response = context.request().get(id.toString(), RequestOptions.create()
+                .setHeader("authorization", "Bearer " + this.access_token)
+                .setHeader("di-backend", "connectapi.garmin.com")
+                .setHeader("dnt", "1")
+                .setHeader("nk", "NT")
+                .setHeader("referer", "https://connect.garmin.com/modern/activity/" + id)
+                .setHeader("x-app-ver", "4.65.3.0")
+        );
+
+        if (!response.ok()) {
+            throw new RuntimeException(response.statusText() + "couldn't download activity file");
+        }
+        Path path = Paths.get("activities_samples/" + id + ".gpx");
+        try {
+            Files.write(path, response.body());
+        } catch (IOException e) {
+            throw new RuntimeException("couldn't save file to:" + path);
+        }
     }
 }
 

@@ -20,14 +20,15 @@ public class CyclopathApplication {
         if (downloader.login()) {
             try {
                 List<Activity> activityList = downloader.getActivitiesList();
-                for (Activity activity : activityList) {
-                    System.out.println(activity);
-                }
+//                for (Activity activity : activityList) {
+//                    System.out.println(activity);
+//                }
+                downloader.downloadActivity(activityList.get(0));
             } catch (IOException e) {
                 System.out.println("couldn't save to file");
             }
+            System.out.println("done downloading?");
 
         }
     }
-
 }

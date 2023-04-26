@@ -10,5 +10,6 @@ public interface ActivityDownloader {
 
     List<Activity> getActivitiesList() throws IOException;
 
+    void downloadActivity(Activity activity);
 
 }
