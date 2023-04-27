@@ -1,6 +1,7 @@
 package com.bassemHalim.cyclopath.Activity;
 
 import com.google.gson.JsonObject;
+import io.jenetics.jpx.GPX;
 
 import java.io.IOException;
 import java.util.List;
@@ -8,8 +9,8 @@ import java.util.List;
 public interface ActivityDownloader {
     boolean login();
 
-    List<Activity> getActivitiesList() throws IOException;
+    List<Activity> getActivitiesList();
 
-    void downloadActivity(Activity activity);
+    GPX downloadActivity(Long id);
 
 }

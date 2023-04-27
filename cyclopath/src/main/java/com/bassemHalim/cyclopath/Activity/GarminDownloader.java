@@ -6,8 +6,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import com.microsoft.playwright.*;
+import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.RequestOptions;
+import io.jenetics.jpx.GPX;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -61,22 +65,24 @@ public class GarminDownloader implements ActivityDownloader {
     @Override
     public boolean login() {
         // Login
-        browser = playwright.firefox().launch(new BrowserType.LaunchOptions().setSlowMo(0).setHeadless(true));
+        browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setSlowMo(100).setHeadless(false));
         context = browser.newContext();
         this.page = context.newPage();
 
         // sign in
         System.out.println("signing in");
         Response response = page.navigate("https://connect.garmin.com/signin/");
+
         page.waitForTimeout(100 + Math.random() * 100);
         FrameLocator signinFrame = page.frameLocator("#gauth-widget-frame-gauth-widget");
+        signinFrame.getByLabel("Password").fill(this.Password);
         signinFrame.locator("#username").fill(this.Username);
         page.waitForTimeout(100 + Math.random() * 100);
         signinFrame.locator("#password").fill(this.Password);
         page.waitForTimeout(100 + Math.random() * 100);
         signinFrame.locator("#login-btn-signin").click();
         page.waitForLoadState(LoadState.NETWORKIDLE);
-//        page.waitForTimeout(2000);
+        page.waitForTimeout(2000);
         System.out.println("getting access token");
         // get access token
         String json = page.context().storageState();
@@ -92,7 +98,7 @@ public class GarminDownloader implements ActivityDownloader {
     }
 
     @Override
-    public List<Activity> getActivitiesList() throws IOException {
+    public List<Activity> getActivitiesList() {
         List<Activity> activityList = new ArrayList();
         // get activity list
         BrowserContext context = browser.newContext(new Browser.NewContextOptions().setStorageState(state));
@@ -109,7 +115,11 @@ public class GarminDownloader implements ActivityDownloader {
         if (response.ok()) {
             String json = response.text();
 //            System.out.println(json);
-            Files.write(Paths.get("activities_samples/list.json"), response.body());
+            try {
+                Files.write(Paths.get("activities_samples/list.json"), response.body());
+            } catch (Exception e) {
+                System.out.println(e);
+            }
             Type activityListType = new TypeToken<ArrayList<Activity>>() {
             }.getType();
             activityList = new GsonBuilder().create().fromJson(json, activityListType);
@@ -121,31 +131,41 @@ public class GarminDownloader implements ActivityDownloader {
     }
 
     @Override
-    public void downloadActivity(Activity activity) {
-        Long id = activity.getActivityId();
-        System.out.println("downloading: " + id);
-        BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-                .setStorageState(state)
-                .setBaseURL(this.garmin_activity_download_gpx_url)
-        );
-        APIResponse response = context.request().get(id.toString(), RequestOptions.create()
-                .setHeader("authorization", "Bearer " + this.access_token)
-                .setHeader("di-backend", "connectapi.garmin.com")
-                .setHeader("dnt", "1")
-                .setHeader("nk", "NT")
-                .setHeader("referer", "https://connect.garmin.com/modern/activity/" + id)
-                .setHeader("x-app-ver", "4.65.3.0")
-        );
+    public GPX downloadActivity(@NotNull Long id) {
+        String filePath = "activities_samples/" + id + ".gpx";
+        Path path = Paths.get(filePath);
 
-        if (!response.ok()) {
-            throw new RuntimeException(response.statusText() + "couldn't download activity file");
+        if (!Files.exists(path)) {
+            System.out.println("downloading: " + id);
+            BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+                    .setStorageState(state)
+                    .setBaseURL(this.garmin_activity_download_gpx_url)
+            );
+            APIResponse response = context.request().get(id.toString(), RequestOptions.create()
+                    .setHeader("authorization", "Bearer " + this.access_token)
+                    .setHeader("di-backend", "connectapi.garmin.com")
+                    .setHeader("dnt", "1")
+                    .setHeader("nk", "NT")
+                    .setHeader("referer", "https://connect.garmin.com/modern/activity/" + id)
+                    .setHeader("x-app-ver", "4.65.3.0")
+            );
+
+            if (!response.ok()) {
+                throw new RuntimeException(response.statusText() + "couldn't download activity file");
+            }
+            try {
+                Files.write(path, response.body());
+            } catch (IOException e) {
+                throw new RuntimeException("couldn't save file to:" + path);
+            }
         }
-        Path path = Paths.get("activities_samples/" + id + ".gpx");
         try {
-            Files.write(path, response.body());
-        } catch (IOException e) {
-            throw new RuntimeException("couldn't save file to:" + path);
+            final GPX gpx10 = GPX.read(path);
+            return gpx10;
+        } catch (Exception e) {
+            System.out.println(e);
         }
+        return null;
     }
 }
 
