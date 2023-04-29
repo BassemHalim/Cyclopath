@@ -1,35 +1,31 @@
 package com.bassemHalim.cyclopath.Activity;
 
 
+import com.bassemHalim.cyclopath.geoJSON.geoJSON;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import com.microsoft.playwright.*;
-import com.microsoft.playwright.options.AriaRole;
-import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.RequestOptions;
-import io.jenetics.jpx.GPX;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
 /**
- * a FIT data downloader from garmin connect
+ * a GPX data downloader from garmin connect
  * the downloader mimics a Browser since garmin doesn't provide access to its API
  * the drawback is that the username and password has to be provided :(
  *
@@ -39,67 +35,96 @@ import java.util.regex.Pattern;
 @Service
 public class GarminDownloader implements ActivityDownloader {
     @Value("${Garmin.USERNAME}")
+    @NotNull
+    @Email
     private String Username;
     @Value("${Garmin.PASSWORD}")
+    @NotNull
     private String Password;
     private String access_token;
-    private final String garmin_connect_base_url = "https://connect.garmin.com";
+    private long access_token_expiry;
+    private final String garmin_connect_signin_url = "https://connect.garmin.com/signin";
     private final String garmin_activity_list_url = "https://connect.garmin.com/activitylist-service/activities/search/activities";
     private final String garmin_activity_download_gpx_url = "https://connect.garmin.com/download-service/export/gpx/activity/";
 
     private Page page;
     private BrowserContext context;
-    private Playwright playwright = Playwright.create();
+    private final Playwright playwright = Playwright.create();
 
     private Browser browser;
     private String state;
 
-    public GarminDownloader() {
-    }
-
-    public GarminDownloader(String username, String password) {
-        Username = username;
-        Password = password;
-    }
-
-    @Override
-    public boolean login() {
+    private boolean login() {
         // Login
-        browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setSlowMo(100).setHeadless(false));
-        context = browser.newContext();
+        Path statePath = Paths.get("state.json");
+        browser = playwright.firefox().launch(new BrowserType.LaunchOptions().setSlowMo(100).setHeadless(true));
+        BrowserContext context = browser.newContext();
+        if (Files.exists(statePath)) {
+            context = browser.newContext(
+                    new Browser.NewContextOptions().setStorageStatePath(statePath));
+        }
+
         this.page = context.newPage();
 
         // sign in
-        System.out.println("signing in");
-        Response response = page.navigate("https://connect.garmin.com/signin/");
-
-        page.waitForTimeout(100 + Math.random() * 100);
-        FrameLocator signinFrame = page.frameLocator("#gauth-widget-frame-gauth-widget");
-        signinFrame.getByLabel("Password").fill(this.Password);
-        signinFrame.locator("#username").fill(this.Username);
-        page.waitForTimeout(100 + Math.random() * 100);
-        signinFrame.locator("#password").fill(this.Password);
-        page.waitForTimeout(100 + Math.random() * 100);
-        signinFrame.locator("#login-btn-signin").click();
-        page.waitForLoadState(LoadState.NETWORKIDLE);
-        page.waitForTimeout(2000);
-        System.out.println("getting access token");
-        // get access token
-        String json = page.context().storageState();
-        Pattern pattern = Pattern.compile("access_token"); // str" "access_token\":\""
-        Matcher matcher = pattern.matcher(json);
-        if (!matcher.find()) {
-            return false;
+        // check if saved tokens are valid
+        if (!getAccessToken(page.context().storageState())) {
+            System.out.println("signing in");
+            Response response = page.navigate(this.garmin_connect_signin_url);
+            page.waitForTimeout(Math.random() * 100);
+            if (!response.ok()) {
+                return false;
+            }
+//        FrameLocator signinFrame = page.frameLocator("#gauth-widget-frame-gauth-widget");
+            page.locator("#email").waitFor();
+            page.locator("#email").fill(this.Username);
+            page.waitForTimeout(100 + Math.random() * 100);
+            page.locator("#password").fill(this.Password);
+            page.waitForTimeout(100 + Math.random() * 100);
+            page.getByTestId("g__button").click();
+//        page.locator("#login-btn-signin").click();
+            page.locator("#column-0").waitFor(); // wait for page to load
+            System.out.println("getting access token");
+            // get access token
+            String storageState = page.context().storageState();
+            if (!getAccessToken(storageState)) return false;
+            this.state = context.storageState();
+            context.storageState(new BrowserContext.StorageStateOptions().setPath(statePath));
+            page.close();
         }
-        this.access_token = json.substring(matcher.end() + 5, matcher.end() + 1137);
-        this.state = context.storageState();
-        System.out.println(access_token);
         return true;
+    }
+
+    private boolean getAccessToken(String storageState) {
+        Pattern pattern = Pattern.compile("access_token"); // str" \"access_token\":\""
+        Matcher matcher = pattern.matcher(storageState);
+        if (!matcher.find()) return false;
+
+        this.access_token = storageState.substring(matcher.end() + 5, matcher.end() + 1137);
+        pattern = Pattern.compile(
+                "refresh_token_expires_in\\\\\\\"\\:[0-9]{4},\\\\\\\"expires\\\\\\\"\\:"
+        ); // str" "refresh_token_expires_in\":7199,\"expires\":1682571122104
+        matcher = pattern.matcher(storageState);
+        if (!matcher.find()) return false;
+        this.access_token_expiry = Long.parseLong(
+                storageState.substring(matcher.end(), matcher.end() + 13));
+        return signedIn(); // verify token is still valid
+    }
+
+    private boolean signedIn() {
+        return this.access_token_expiry > Instant.now().toEpochMilli();
     }
 
     @Override
     public List<Activity> getActivitiesList() {
-        List<Activity> activityList = new ArrayList();
+        if (!signedIn()) {
+            System.out.println("Access Token Expired, Logging in");
+            if (!login()) {
+                throw new RuntimeException("failed to login");
+            }
+        }
+
+        List<Activity> activityList = new ArrayList<>();
         // get activity list
         BrowserContext context = browser.newContext(new Browser.NewContextOptions().setStorageState(state));
         APIResponse response = context.request().get(this.garmin_activity_list_url, RequestOptions.create()
@@ -124,18 +149,24 @@ public class GarminDownloader implements ActivityDownloader {
             }.getType();
             activityList = new GsonBuilder().create().fromJson(json, activityListType);
         } else {
-            System.out.println(response.status());
+            System.out.println("couldn't retrieve activity list status:" + response.status());
         }
 //        browser.close();
         return activityList;
     }
 
     @Override
-    public GPX downloadActivity(@NotNull Long id) {
+    public String downloadActivity(@NotNull @Positive Long id) {
+
         String filePath = "activities_samples/" + id + ".gpx";
         Path path = Paths.get(filePath);
 
         if (!Files.exists(path)) {
+            if (!signedIn()) {
+                if (!login()) {
+                    throw new RuntimeException("failed to login");
+                }
+            }
             System.out.println("downloading: " + id);
             BrowserContext context = browser.newContext(new Browser.NewContextOptions()
                     .setStorageState(state)
@@ -160,8 +191,10 @@ public class GarminDownloader implements ActivityDownloader {
             }
         }
         try {
-            final GPX gpx10 = GPX.read(path);
-            return gpx10;
+            String xml = Files.readString(path);
+            geoJSON file = new geoJSON();
+            return file.GPXtoGeoJson(xml);
+
         } catch (Exception e) {
             System.out.println(e);
         }

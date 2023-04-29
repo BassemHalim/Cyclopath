@@ -5,7 +5,6 @@ import com.google.gson.annotations.Expose;
 import jakarta.annotation.Generated;
 
 @Generated("net.hexar.json2pojo")
-@SuppressWarnings("unused")
 public class ActivityType {
 
     @Expose
