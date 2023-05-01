@@ -2,6 +2,7 @@ package com.bassemHalim.cyclopath.Activity;
 
 
 import com.bassemHalim.cyclopath.geoJSON.geoJSON;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.microsoft.playwright.*;
@@ -12,8 +13,10 @@ import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -22,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPOutputStream;
 
 
 /**
@@ -96,6 +100,7 @@ public class GarminDownloader implements ActivityDownloader {
     }
 
     private boolean getAccessToken(String storageState) {
+        this.state = storageState;
         Pattern pattern = Pattern.compile("access_token"); // str" \"access_token\":\""
         Matcher matcher = pattern.matcher(storageState);
         if (!matcher.find()) return false;
@@ -117,13 +122,8 @@ public class GarminDownloader implements ActivityDownloader {
 
     @Override
     public List<Activity> getActivitiesList() {
-        if (!signedIn()) {
-            System.out.println("Access Token Expired, Logging in");
-            if (!login()) {
-                throw new RuntimeException("failed to login");
-            }
-        }
 
+        login();
         List<Activity> activityList = new ArrayList<>();
         // get activity list
         BrowserContext context = browser.newContext(new Browser.NewContextOptions().setStorageState(state));
@@ -156,7 +156,7 @@ public class GarminDownloader implements ActivityDownloader {
     }
 
     @Override
-    public String downloadActivity(@NotNull @Positive Long id) {
+    public geoJSON downloadActivity(@NotNull @Positive Long id) {
 
         String filePath = "activities_samples/" + id + ".gpx";
         Path path = Paths.get(filePath);
@@ -191,14 +191,29 @@ public class GarminDownloader implements ActivityDownloader {
             }
         }
         try {
-            String xml = Files.readString(path);
+            String gpx = Files.readString(path);
             geoJSON file = new geoJSON();
-            return file.GPXtoGeoJson(xml);
+            geoJSON geojson = file.GPXtoGeoJson(gpx);
+            ObjectMapper mapper = new ObjectMapper();
 
+//            Files.write(Paths.get("activities_samples/" + id + ".json"), mapper.writeValueAsBytes(geojson));
+            compressStringToGzip(mapper.writeValueAsString(geojson), Paths.get("activities_samples/" + id + "_zip.json"));
+            return geojson;
         } catch (Exception e) {
             System.out.println(e);
         }
         return null;
+    }
+
+    private static void compressStringToGzip(String data, Path target) throws IOException {
+
+        try (GZIPOutputStream gos = new GZIPOutputStream(
+                new FileOutputStream(target.toFile()))) {
+
+            gos.write(data.getBytes(StandardCharsets.UTF_8));
+
+        }
+
     }
 }
 

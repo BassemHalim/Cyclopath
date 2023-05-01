@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import lombok.Getter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.XML;
@@ -17,7 +18,8 @@ import org.json.XML;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class geoJSON {
+@Getter
+public class geoJSON extends JSONObject {
     private final String type = "FeatureCollection";
     private ArrayList<Feature> features;
 
@@ -31,7 +33,7 @@ public class geoJSON {
      * @param gpx
      * @return
      */
-    public String GPXtoGeoJson(String gpx) {
+    public geoJSON GPXtoGeoJson(String gpx) {
         JSONObject json = XML.toJSONObject(gpx).getJSONObject("gpx");
 
         String time = json.getJSONObject("metadata").getString("time");
@@ -56,11 +58,9 @@ public class geoJSON {
         this.features.add(track);
         ObjectMapper mapper = new ObjectMapper();
         mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-        try {
-            return mapper.writeValueAsString(this);
-        } catch (JacksonException e) {
-            System.out.println(e.toString());
-        }
-        return "";
+
+        return this;
+
+
     }
 }

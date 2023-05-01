@@ -1,5 +1,6 @@
 package com.bassemHalim.cyclopath.Activity;
 
+import com.bassemHalim.cyclopath.geoJSON.geoJSON;
 import io.jenetics.jpx.GPX;
 import lombok.Getter;
 import org.json.JSONObject;
@@ -26,7 +27,7 @@ public class ActivityController {
     }
 
     @GetMapping("/{id}")
-    String getActivity(@PathVariable Long id) {
+    JSONObject getActivity(@PathVariable Long id) {
         return service.downloadActivity(id);
     }
 

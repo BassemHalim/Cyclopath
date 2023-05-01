@@ -1,5 +1,6 @@
 package com.bassemHalim.cyclopath.Activity;
 
+import com.bassemHalim.cyclopath.geoJSON.geoJSON;
 import com.google.gson.JsonObject;
 import io.jenetics.jpx.GPX;
 import org.json.JSONObject;
@@ -12,6 +13,6 @@ public interface ActivityDownloader {
 
     List<Activity> getActivitiesList();
 
-    String downloadActivity(Long id);
+    geoJSON downloadActivity(Long id);
 
 }
