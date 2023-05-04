@@ -45,9 +45,19 @@ longest distance, number of activities, etc.
 
 ### Dynamo DB Single Table
 
-| Primary Key   | Sort Key         | Attributes                                                                                  |
-|---------------|------------------|---------------------------------------------------------------------------------------------|
-| UserID:UNIQUE | Profile#USERNAME | {Username:STRING, Email: STRING, Password:STRING, ID:LONG, weight:FLOAT, Hight(cm):INT,...} |
-| UserID:UNIQUE | Stats            | {LongestRideID:LONG, numActivities:INT, ...}                                                |
-| UserID:UNIQUE | Activiy#ID       | {Name, CreationTime, Distance, CaloriesBurned, Comments, Route:geoJSON}                     | 
+| Primary Key | Sort Key         | Attributes                                                                                  |
+|-------------|------------------|---------------------------------------------------------------------------------------------|
+| UserUUID    | PROFILE#username | {Username:STRING, Email: STRING, Password:STRING, ID:LONG, weight:FLOAT, Hight(cm):INT,...} |
+| UserUUID    | STATS#username   | {LongestRideID:LONG, numActivities:INT, ...}                                                |
+| UserUUID    | ACTIVITY#ID      | {Name, CreationTime, Distance, CaloriesBurned, Comments, Route:geoJSON}                     | 
 
+- activity id is the same as unix time and is only unique per user
+- this is useful for getting an activity by id or for getting activities within a date range
+
+### Access Patterns
+
+- Lookup user info by id
+- lookup user by username
+- get activity by id
+- get activities withing a date range
+- get athlete stats

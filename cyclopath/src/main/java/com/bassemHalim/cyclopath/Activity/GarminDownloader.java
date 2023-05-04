@@ -13,10 +13,9 @@ import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.FileOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -38,6 +37,10 @@ import java.util.zip.GZIPOutputStream;
  */
 @Service
 public class GarminDownloader implements ActivityDownloader {
+
+//    @Autowired
+//    private ActivityRepository activityRepository;
+
     @Value("${Garmin.USERNAME}")
     @NotNull
     @Email
@@ -93,6 +96,8 @@ public class GarminDownloader implements ActivityDownloader {
             String storageState = page.context().storageState();
             if (!getAccessToken(storageState)) return false;
             this.state = context.storageState();
+
+//            System.out.println(this.state);
             context.storageState(new BrowserContext.StorageStateOptions().setPath(statePath));
             page.close();
         }
@@ -102,10 +107,14 @@ public class GarminDownloader implements ActivityDownloader {
     private boolean getAccessToken(String storageState) {
         this.state = storageState;
         Pattern pattern = Pattern.compile("access_token"); // str" \"access_token\":\""
-        Matcher matcher = pattern.matcher(storageState);
+        Pattern pattern1 = Pattern.compile("access_token.{5}[a-zA-z0-9.-]*\"");
+        Matcher matcher = pattern1.matcher(storageState); // @FIXME
         if (!matcher.find()) return false;
 
-        this.access_token = storageState.substring(matcher.end() + 5, matcher.end() + 1137);
+        this.access_token = storageState.substring(matcher.start() + 17, matcher.end() - 2);
+//        this.access_token = storageState.substring(matcher.end() + 5, matcher.end() + 1137);
+//        System.out.println(this.access_token);
+//        return false;
         pattern = Pattern.compile(
                 "refresh_token_expires_in\\\\\\\"\\:[0-9]{4},\\\\\\\"expires\\\\\\\"\\:"
         ); // str" "refresh_token_expires_in\":7199,\"expires\":1682571122104
@@ -122,8 +131,11 @@ public class GarminDownloader implements ActivityDownloader {
 
     @Override
     public List<Activity> getActivitiesList() {
+        if (!login()) {
+            System.out.println("failed to authenticate");
+        }
+//        System.out.println(access_token);
 
-        login();
         List<Activity> activityList = new ArrayList<>();
         // get activity list
         BrowserContext context = browser.newContext(new Browser.NewContextOptions().setStorageState(state));
@@ -148,6 +160,7 @@ public class GarminDownloader implements ActivityDownloader {
             Type activityListType = new TypeToken<ArrayList<Activity>>() {
             }.getType();
             activityList = new GsonBuilder().create().fromJson(json, activityListType);
+
         } else {
             System.out.println("couldn't retrieve activity list status:" + response.status());
         }
@@ -156,7 +169,7 @@ public class GarminDownloader implements ActivityDownloader {
     }
 
     @Override
-    public geoJSON downloadActivity(@NotNull @Positive Long id) {
+    public byte[] downloadActivity(@NotNull @Positive Long id) {
 
         String filePath = "activities_samples/" + id + ".gpx";
         Path path = Paths.get(filePath);
@@ -197,23 +210,27 @@ public class GarminDownloader implements ActivityDownloader {
             ObjectMapper mapper = new ObjectMapper();
 
 //            Files.write(Paths.get("activities_samples/" + id + ".json"), mapper.writeValueAsBytes(geojson));
-            compressStringToGzip(mapper.writeValueAsString(geojson), Paths.get("activities_samples/" + id + "_zip.json"));
-            return geojson;
+//            StringToGzip(mapper.writeValueAsString(geojson), Paths.get("activities_samples/" + id + "_zip.json"));
+            byte[] zipped = gzip(mapper.writeValueAsBytes(geojson));
+
+            return zipped;
         } catch (Exception e) {
             System.out.println(e);
         }
         return null;
     }
 
-    private static void compressStringToGzip(String data, Path target) throws IOException {
-
-        try (GZIPOutputStream gos = new GZIPOutputStream(
-                new FileOutputStream(target.toFile()))) {
-
-            gos.write(data.getBytes(StandardCharsets.UTF_8));
-
+    public static byte[] gzip(byte[] data) {
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            GZIPOutputStream out = new GZIPOutputStream(bos);
+            out.write(data);
+            out.close();
+            return bos.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-
     }
+
 }
 

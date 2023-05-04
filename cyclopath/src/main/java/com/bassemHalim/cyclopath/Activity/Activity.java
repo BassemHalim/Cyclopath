@@ -1,15 +1,18 @@
 
 package com.bassemHalim.cyclopath.Activity;
 
-import com.google.gson.annotations.Expose;
-import jakarta.annotation.Generated;
-import lombok.Getter;
-import lombok.Setter;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.List;
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@DynamoDBTable(tableName = "Activity")
 
-@Getter
-@Setter
 public class Activity {
     @Override
     public String toString() {
@@ -23,72 +26,59 @@ public class Activity {
                 '}';
     }
 
-    private Long activityId;
+    @DynamoDBHashKey(attributeName = "pk")
+    private long activityId;
+    @DynamoDBAttribute()
     private String activityName;
-    private ActivityType activityType;
-    private Boolean atpActivity;
-    private Boolean autoCalcCalories;
-    private Object averageBikingCadenceInRevPerMinute;
-    private Double averageHR;
-    private Double averageSpeed;
-    private Object avgPower;
-    private Long beginTimestamp;
-    private Double bmrCalories;
-    private Double calories;
-    private Object caloriesConsumed;
-    private Object caloriesEstimated;
-    private Object comments;
-    private Object courseId;
-    private Boolean decoDive;
-    private Long deviceId;
-    private Double distance;
-    private Double duration;
-    private Double elapsedDuration;
-    private Boolean elevationCorrected;
-    private Double elevationGain;
-    private Double elevationLoss;
-    private Double endLatitude;
-    private Double endLongitude;
-    private Boolean favorite;
-    private Boolean hasPolyline;
-    private Boolean hasSplits;
-    private Boolean hasVideo;
-    private Long lapCount;
-    private String locationName;
-    private Boolean manualActivity;
-    private String manufacturer;
-    private Object maxBikingCadenceInRevPerMinute;
-    private Double maxElevation;
-    private Double maxHR;
-    private Object maxPower;
-    private Double maxSpeed;
-    private Object maxTemperature;
-    private Double maxVerticalSpeed;
-    private Double minActivityLapDuration;
-    private Double minElevation;
-    private Object minTemperature;
-    private Double movingDuration;
-    private String ownerDisplayName;
-    private String ownerFullName;
-    private Long ownerId;
-    private String ownerProfileImageUrlLarge;
-    private String ownerProfileImageUrlMedium;
-    private String ownerProfileImageUrlSmall;
-    private Boolean parent;
-    private Object parentId;
-    private Boolean pr;
-    private Boolean purposeful;
-    private List<Object> splitSummaries;
-    private Long sportTypeId;
-    private Double startLatitude;
-    private Double startLongitude;
-    private String startTimeGMT;
-    private String startTimeLocal;
-    private Long timeZoneId;
-    private Boolean userPro;
-    private Object videoUrl;
-    private Object waterConsumed;
-    private Double waterEstimated;
+    public double averageHR;
+    public double averageSpeed;
+    public long beginTimestamp;
+    public double bmrCalories;
+    public double calories;
+    public long deviceId;
+    public double distance;
+    public double duration;
+    public double elapsedDuration;
+    public boolean elevationCorrected;
+    public double elevationGain;
+    public double elevationLoss;
+    public double endLatitude;
+    public double endLongitude;
+    public boolean favorite;
+    public boolean hasPolyline;
+    public boolean hasSplits;
+    public boolean hasVideo;
+    public int lapCount;
+    public String locationName;
+    public boolean manualActivity;
+    public String manufacturer;
+    public double maxElevation;
+    public double maxHR;
+    public double maxSpeed;
+    public double maxVerticalSpeed;
+    public double minActivityLapDuration;
+    public double minElevation;
+    public double movingDuration;
+    public String ownerDisplayName;
+    public String ownerFullName;
+    public int ownerId;
+    //    public String ownerProfileImageUrlLarge;
+//    public String ownerProfileImageUrlMedium;
+//    public String ownerProfileImageUrlSmall;
+//    public boolean parent;
+//    public boolean pr;
+    //    public boolean purposeful;
+    public int sportTypeId;
+    public double startLatitude;
+    public double startLongitude;
+    public String startTimeGMT;
+    public String startTimeLocal;
+    public int timeZoneId;
+    //    public boolean userPro;
+    public double waterEstimated;
+
+    public byte[] geoJSON_gzip;
+
 
 }
 
