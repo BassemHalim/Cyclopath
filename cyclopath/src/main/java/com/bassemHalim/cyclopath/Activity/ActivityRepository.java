@@ -8,6 +8,7 @@ import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughputExceededExce
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Repository
@@ -15,7 +16,7 @@ public class ActivityRepository {
     @Autowired
     private DynamoDBMapper dynamoDBMapper;
 
-    public Activity save(Activity activity) {
+    public void save(Activity activity) {
         boolean success = false;
         do {
             try {
@@ -30,7 +31,23 @@ public class ActivityRepository {
                 }
             }
         } while (!success);
-        return activity;
+    }
+
+    public void batchSave(List<Activity> activityList) {
+        boolean success = false;
+        do {
+            try {
+                dynamoDBMapper.batchSave(activityList);
+                success = true;
+            } catch (ProvisionedThroughputExceededException e) {
+                System.out.println("exceeded provisioned WCU going to sleep for a bit");
+                try {
+                    TimeUnit.SECONDS.sleep(5);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        } while (!success);
     }
 
     public Activity getActivityById(Long ID) {

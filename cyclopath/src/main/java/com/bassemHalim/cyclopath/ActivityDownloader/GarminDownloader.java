@@ -1,6 +1,10 @@
-package com.bassemHalim.cyclopath.Activity;
+package com.bassemHalim.cyclopath.ActivityDownloader;
 
 
+import com.bassemHalim.cyclopath.Activity.Activity;
+import com.bassemHalim.cyclopath.ActivityDownloader.GarminActivityDTO.ActivityDTOMapper;
+import com.bassemHalim.cyclopath.ActivityDownloader.GarminActivityDTO.GarminActivityDTO;
+import com.bassemHalim.cyclopath.ActivityListItemDTO.ActivityListItemDTO;
 import com.bassemHalim.cyclopath.geoJSON.geoJSON;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.GsonBuilder;
@@ -10,6 +14,7 @@ import com.microsoft.playwright.options.RequestOptions;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -38,8 +43,6 @@ import java.util.zip.GZIPOutputStream;
 @Service
 public class GarminDownloader implements ActivityDownloader {
 
-//    @Autowired
-//    private ActivityRepository activityRepository;
 
     @Value("${Garmin.USERNAME}")
     @NotNull
@@ -50,16 +53,19 @@ public class GarminDownloader implements ActivityDownloader {
     private String Password;
     private String access_token;
     private long access_token_expiry;
+    // @TODO clean urls
     private final String garmin_connect_signin_url = "https://connect.garmin.com/signin";
     private final String garmin_activity_list_url = "https://connect.garmin.com/activitylist-service/activities/search/activities";
     private final String garmin_activity_download_gpx_url = "https://connect.garmin.com/download-service/export/gpx/activity/";
-
+    private final String garmin_activity_service_url = "https://connect.garmin.com/activity-service/activity/";
     private Page page;
     private BrowserContext context;
     private final Playwright playwright = Playwright.create();
 
     private Browser browser;
     private String state;
+    @Autowired
+    private ActivityDTOMapper DTOmapper;
 
     private boolean login() {
         // Login
@@ -130,13 +136,13 @@ public class GarminDownloader implements ActivityDownloader {
     }
 
     @Override
-    public List<Activity> getActivitiesList() {
+    public List<ActivityListItemDTO> getActivitiesList() {
         if (!login()) {
             System.out.println("failed to authenticate");
         }
 //        System.out.println(access_token);
 
-        List<Activity> activityList = new ArrayList<>();
+        List<ActivityListItemDTO> activityList = new ArrayList<>();
         // get activity list
         BrowserContext context = browser.newContext(new Browser.NewContextOptions().setStorageState(state));
         APIResponse response = context.request().get(this.garmin_activity_list_url, RequestOptions.create()
@@ -157,7 +163,7 @@ public class GarminDownloader implements ActivityDownloader {
             } catch (Exception e) {
                 System.out.println(e);
             }
-            Type activityListType = new TypeToken<ArrayList<Activity>>() {
+            Type activityListType = new TypeToken<ArrayList<ActivityListItemDTO>>() { //@FIXME
             }.getType();
             activityList = new GsonBuilder().create().fromJson(json, activityListType);
 
@@ -169,7 +175,54 @@ public class GarminDownloader implements ActivityDownloader {
     }
 
     @Override
-    public byte[] downloadActivity(@NotNull @Positive Long id) {
+    public Activity getActivity(@NotNull @Positive Long ID) {
+
+        if (!signedIn()) {
+            if (!login()) {
+                throw new RuntimeException("failed to login");
+            }
+        }
+        System.out.println("downloading Activity: " + ID);
+        BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+                .setStorageState(state)
+                .setBaseURL(this.garmin_activity_service_url)
+        );
+        APIResponse response = context.request().get(ID.toString(), RequestOptions.create()
+                .setHeader("authorization", "Bearer " + this.access_token)
+                .setHeader("di-backend", "connectapi.garmin.com")
+                .setHeader("dnt", "1")
+                .setHeader("nk", "NT")
+                .setHeader("referer", "https://connect.garmin.com/modern/activity/" + ID)
+                .setHeader("x-app-ver", "4.65.3.0")
+                .setHeader("x-requested-with", "XMLHttpRequest")
+        );
+
+        if (!response.ok()) {
+            throw new RuntimeException(response.statusText() + "couldn't download activity file");
+        }
+        String json = response.text();
+//        String json = "{\"activityId\":8507418985,\"activityUUID\":{\"uuid\":\"c01e84ca-115c-440a-91a0-504f592b2834\"},\"activityName\":\"Marin County Cycling\",\"userProfileId\":101798589,\"isMultiSportParent\":false,\"activityTypeDTO\":{\"typeId\":2,\"typeKey\":\"cycling\",\"parentTypeId\":17,\"isHidden\":false,\"restricted\":false,\"trimmable\":true},\"eventTypeDTO\":{\"typeId\":9,\"typeKey\":\"uncategorized\",\"sortOrder\":10},\"accessControlRuleDTO\":{\"typeId\":2,\"typeKey\":\"private\"},\"timeZoneUnitDTO\":{\"unitId\":121,\"unitKey\":\"America/Los_Angeles\",\"factor\":0.0,\"timeZone\":\"America/Los_Angeles\"},\"metadataDTO\":{\"isOriginal\":true,\"deviceApplicationInstallationId\":894696,\"agentApplicationInstallationId\":null,\"agentString\":null,\"fileFormat\":{\"formatId\":7,\"formatKey\":\"fit\"},\"associatedCourseId\":null,\"lastUpdateDate\":\"2022-11-26T04:13:16.0\",\"uploadedDate\":\"2022-03-23T02:34:39.0\",\"videoUrl\":null,\"hasPolyline\":true,\"hasChartData\":true,\"hasHrTimeInZones\":true,\"hasPowerTimeInZones\":false,\"userInfoDto\":{\"userProfilePk\":101798589,\"displayname\":\"7472e467-1faf-4e23-bc92-8af59c386f6b\",\"fullname\":\"Bassem\",\"profileImageUrlLarge\":null,\"profileImageUrlMedium\":\"https://s3.amazonaws.com/garmin-connect-prod/profile_images/30fba2f4-3c23-48c4-8bed-506f7d72fbd5-101798589.png\",\"profileImageUrlSmall\":\"https://s3.amazonaws.com/garmin-connect-prod/profile_images/e247b616-4d40-46b4-9f55-c893b0fe32a7-101798589.png\",\"userPro\":false},\"childIds\":[],\"childActivityTypes\":[],\"sensors\":[],\"activityImages\":[],\"manufacturer\":\"GARMIN\",\"diveNumber\":null,\"lapCount\":13,\"associatedWorkoutId\":null,\"isAtpActivity\":null,\"deviceMetaDataDTO\":{\"deviceId\":\"3352844860\",\"deviceTypePk\":36817,\"deviceVersionPk\":894696},\"hasIntensityIntervals\":false,\"hasSplits\":false,\"eBikeMaxAssistModes\":null,\"eBikeBatteryUsage\":null,\"eBikeBatteryRemaining\":null,\"eBikeAssistModeInfoDTOList\":null,\"calendarEventInfo\":null,\"autoCalcCalories\":false,\"favorite\":false,\"manualActivity\":false,\"runPowerWindDataEnabled\":null,\"trimmed\":false,\"personalRecord\":false,\"gcj02\":false,\"elevationCorrected\":true},\"summaryDTO\":{\"startTimeLocal\":\"2022-03-22T13:10:20.0\",\"startTimeGMT\":\"2022-03-22T20:10:20.0\",\"startLatitude\":37.83193412236869,\"startLongitude\":-122.48024803586304,\"distance\":97854.03,\"duration\":17125.906,\"movingDuration\":16849.0,\"elapsedDuration\":22948.664,\"elevationGain\":422.73,\"elevationLoss\":475.33,\"maxElevation\":67.6,\"minElevation\":-6.2,\"averageSpeed\":5.714000225067138,\"averageMovingSpeed\":5.8077055759985745,\"maxSpeed\":11.710000038146973,\"calories\":2477.0,\"bmrCalories\":379.0,\"averageHR\":154.0,\"maxHR\":185.0,\"endLatitude\":37.808159943670034,\"endLongitude\":-122.42804076522589,\"maxVerticalSpeed\":3.799999952316284,\"waterEstimated\":1734.0,\"minActivityLapDuration\":263.213},\"locationName\":\"Marin County\"}\n";
+//        System.out.println(json);
+        GarminActivityDTO activityDTO = new GsonBuilder().create().fromJson(json, GarminActivityDTO.class);
+//        ModelMapper modelMapper = new ModelMapper();
+//        modelMapper.getConfiguration().setAmbiguityIgnored(true);
+//        modelMapper.getConfiguration().setSkipNullEnabled(true);
+//        Activity activity = modelMapper.map(activityDTO, Activity.class);
+//        ActivityListItemDTO dto = modelMapper.map(activityDTO, ActivityListItemDTO.class);
+        Activity activity = DTOmapper.apply(activityDTO);
+        return activity;
+
+    }
+
+    /**
+     * download the GPX (GPS) file containing the activity route then convert it to geoJSON and
+     * compress it
+     *
+     * @param id activity id
+     * @return returns the gzipped geoJSON route
+     */
+    @Override
+    public byte[] downloadActivityRoute(@NotNull @Positive Long id) {
 
         String filePath = "activities_samples/" + id + ".gpx";
         Path path = Paths.get(filePath);
@@ -209,18 +262,14 @@ public class GarminDownloader implements ActivityDownloader {
             geoJSON geojson = file.GPXtoGeoJson(gpx);
             ObjectMapper mapper = new ObjectMapper();
 
-//            Files.write(Paths.get("activities_samples/" + id + ".json"), mapper.writeValueAsBytes(geojson));
-//            StringToGzip(mapper.writeValueAsString(geojson), Paths.get("activities_samples/" + id + "_zip.json"));
-            byte[] zipped = gzip(mapper.writeValueAsBytes(geojson));
-
-            return zipped;
+            return gzip(mapper.writeValueAsBytes(geojson));
         } catch (Exception e) {
             System.out.println(e);
         }
         return null;
     }
 
-    public static byte[] gzip(byte[] data) {
+    private byte[] gzip(byte[] data) {
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             GZIPOutputStream out = new GZIPOutputStream(bos);
