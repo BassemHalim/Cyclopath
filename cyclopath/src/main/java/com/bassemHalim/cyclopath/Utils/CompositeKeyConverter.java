@@ -6,7 +6,7 @@ public class CompositeKeyConverter implements DynamoDBTypeConverter<String, Comp
 
     @Override
     public String convert(CompositeKey object) {
-        return object.getPrefix() + object.getPostfix();
+        return object.getPrefix() + "#" + object.getPostfix();
     }
 
     @Override

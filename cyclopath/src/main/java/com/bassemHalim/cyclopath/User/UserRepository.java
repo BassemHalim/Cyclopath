@@ -39,16 +39,15 @@ public class UserRepository {
                 new DynamoDBQueryExpression<User>()
                         .withHashKeyValues(user)
                         .withLimit(2) // to verify uniqueness
-                        .withIndexName("email")
+                        .withIndexName("email-index")
                         .withConsistentRead(false);
 
         List<User> users = dynamoDBMapper.query(User.class, queryExpression);
-        if (users.size() > 1) {
-            System.out.println("found more than 1 user with email: " + Email);
+        if (users.size() > 0) {
+            // assumes emails are unique
+            return users.get(0);
         }
-        // assumes emails are unique
-        user = users.get(0);
-        return user;
+        return null;
     }
 
     public User getUserByUUID(String uuid) {

@@ -12,8 +12,8 @@ public class UserController {
     private UserService userService;
 
     @GetMapping
-    public boolean dynamotest() {
-        userService.sampleTestCase();
-        return true;
+    public void dynamotest() {
+        userService.testSave();
+
     }
 }

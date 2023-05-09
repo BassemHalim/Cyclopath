@@ -3,6 +3,7 @@ package com.bassemHalim.cyclopath.Activity;
 import com.bassemHalim.cyclopath.ActivityListItemDTO.ActivityListItemDTO;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +19,7 @@ public class ActivityController {
     private ActivityService activityService;
 
     @GetMapping("/activity-list")
-    List<ActivityListItemDTO> getActivityList() {
+    ResponseEntity<List<ActivityListItemDTO>> getActivityList() {
         List<ActivityListItemDTO> activityList = activityService.getActivityList();
 //        for (Activity activity : activityList) {
 //            byte[] geoJSON_gzip = service.downloadActivityRoute(activity.getActivityId());
@@ -30,7 +31,7 @@ public class ActivityController {
 //            }
 //        }
 //        activityRepository.batchSave(activityList);
-        return activityList;
+        return ResponseEntity.ok(activityList);
     }
 
 
