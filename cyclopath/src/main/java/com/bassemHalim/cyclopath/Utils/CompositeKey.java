@@ -2,20 +2,21 @@ package com.bassemHalim.cyclopath.Utils;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
-@AllArgsConstructor
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class CompositeKey implements Comparable<CompositeKey>, Serializable {
-
 
     private String prefix;
     private String postfix;
 
     @Override
     public String toString() {
-        return prefix + postfix;
+        return prefix + "#" + postfix;
     }
 
     @Override

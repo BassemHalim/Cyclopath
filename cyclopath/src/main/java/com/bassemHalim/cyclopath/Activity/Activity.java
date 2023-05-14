@@ -1,32 +1,28 @@
 
 package com.bassemHalim.cyclopath.Activity;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
+import com.amazonaws.services.dynamodbv2.datamodeling.*;
+import com.bassemHalim.cyclopath.User.User;
+import com.bassemHalim.cyclopath.Utils.CompositeKey;
+import com.bassemHalim.cyclopath.Utils.CompositeKeyConverter;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@DynamoDBTable(tableName = "Activity")
+@DynamoDBTable(tableName = "Cyclopath")
 
 public class Activity {
-//    @Override
-//    public String toString() {
-//        return "Activity{" +
-//                "activityId=" + activityId +
-//                ", activityName='" + activityName + '\'' +
-//                ", averageHR=" + averageHR +
-//                ", averageSpeed=" + averageSpeed +
-//                ", beginTimestamp=" + beginTimestamp +
-//                ", calories=" + calories +
-//                '}';
-//    }
-
-    @DynamoDBHashKey(attributeName = "pk")
+    @DynamoDBAttribute(attributeName = "CyclopathPK")
+    private String ownerUUID;
+    private CompositeKey sortKey;
+    @DynamoDBIgnore
+    @DynamoDBAttribute(attributeName = "SK")
+    private final String SK = "ACTIVITY";
+    @DynamoDBAttribute(attributeName = "activityID")
     private long activityId;
     @DynamoDBAttribute(attributeName = "name")
     private String activityName;
@@ -72,7 +68,7 @@ public class Activity {
 //    public String ownerProfileImageUrlSmall;
 //    public boolean parent;
 //    public boolean pr;
-    //    public boolean purposeful;
+//    public boolean purposeful;
 //    private int sportTypeId;
     @DynamoDBAttribute(attributeName = "startLat")
     private double startLatitude;
@@ -83,9 +79,33 @@ public class Activity {
     private int timeZoneId;
     //    public boolean userPro;
     private double waterEstimated;
-
     private byte[] geoJSON_gzip;
 
+    @DynamoDBTypeConverted(converter = CompositeKeyConverter.class) // FIXME: 5/12/2023
+    @DynamoDBRangeKey(attributeName = "CyclopathSK")
+    public CompositeKey getSortKey() {
+        if (sortKey == null) {
+            sortKey = new CompositeKey(SK, String.valueOf(activityId));
+        }
+        return sortKey;
+    }
 
+    @DynamoDBTypeConverted(converter = CompositeKeyConverter.class) // FIXME: 5/12/2023
+    public void setSortKey(CompositeKey key) {
+        sortKey = key;
+    }
+
+    @DynamoDBHashKey(attributeName = "CyclopathPK")
+    public String getOwnerUUID() {
+        if (ownerUUID == null) {
+            ownerUUID = ((User) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
+        }
+        return ownerUUID;
+    }
+
+    @DynamoDBIgnore
+    public String getSK() {
+        return this.SK;
+    }
 }
 

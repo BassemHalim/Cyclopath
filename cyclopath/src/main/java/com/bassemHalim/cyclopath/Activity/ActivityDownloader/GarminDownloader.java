@@ -1,10 +1,10 @@
-package com.bassemHalim.cyclopath.ActivityDownloader;
+package com.bassemHalim.cyclopath.Activity.ActivityDownloader;
 
 
 import com.bassemHalim.cyclopath.Activity.Activity;
-import com.bassemHalim.cyclopath.ActivityDownloader.GarminActivityDTO.ActivityDTOMapper;
-import com.bassemHalim.cyclopath.ActivityDownloader.GarminActivityDTO.GarminActivityDTO;
-import com.bassemHalim.cyclopath.ActivityListItemDTO.ActivityListItemDTO;
+import com.bassemHalim.cyclopath.Activity.ActivityDownloader.GarminActivityDTO.GarminActivityDTO;
+import com.bassemHalim.cyclopath.Activity.ActivityDownloader.GarminActivityListItemDTO.ActivityListItemDTO;
+import com.bassemHalim.cyclopath.Activity.ActivityMapper;
 import com.bassemHalim.cyclopath.geoJSON.geoJSON;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.GsonBuilder;
@@ -14,7 +14,7 @@ import com.microsoft.playwright.options.RequestOptions;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -41,9 +41,14 @@ import java.util.zip.GZIPOutputStream;
  * @see <a href="https://github.com/tcgoetz/GarminDB/blob/master/garmindb/download.py">python reference repo</a>
  */
 @Service
+@Log
 public class GarminDownloader implements ActivityDownloader {
 
-
+    private static final String GARMIN_BASE_URL = "https://connect.garmin.com";
+    private final String garmin_connect_signin_url = GARMIN_BASE_URL + "/signin";
+    private final String garmin_activity_list_url = GARMIN_BASE_URL + "/activitylist-service/activities/search/activities";
+    private final String garmin_activity_download_gpx_url = GARMIN_BASE_URL + "/download-service/export/gpx/activity/";
+    private final String garmin_activity_service_url = GARMIN_BASE_URL + "/activity-service/activity/";
     @Value("${Garmin.USERNAME}")
     @NotNull
     @Email
@@ -53,24 +58,19 @@ public class GarminDownloader implements ActivityDownloader {
     private String Password;
     private String access_token;
     private long access_token_expiry;
-    // @TODO clean urls
-    private final String garmin_connect_signin_url = "https://connect.garmin.com/signin";
-    private final String garmin_activity_list_url = "https://connect.garmin.com/activitylist-service/activities/search/activities";
-    private final String garmin_activity_download_gpx_url = "https://connect.garmin.com/download-service/export/gpx/activity/";
-    private final String garmin_activity_service_url = "https://connect.garmin.com/activity-service/activity/";
+
+    private String state; // browser state: cookies + local storage
+
     private Page page;
     private BrowserContext context;
     private final Playwright playwright = Playwright.create();
-
     private Browser browser;
-    private String state;
-    @Autowired
-    private ActivityDTOMapper DTOmapper;
 
-    private boolean login() {
+
+    private boolean garminLogin() {
         // Login
         Path statePath = Paths.get("state.json");
-        browser = playwright.firefox().launch(new BrowserType.LaunchOptions().setSlowMo(100).setHeadless(true));
+        browser = playwright.firefox().launch(new BrowserType.LaunchOptions().setSlowMo(50).setHeadless(true));
         BrowserContext context = browser.newContext();
         if (Files.exists(statePath)) {
             context = browser.newContext(
@@ -82,7 +82,7 @@ public class GarminDownloader implements ActivityDownloader {
         // sign in
         // check if saved tokens are valid
         if (!getAccessToken(page.context().storageState())) {
-            System.out.println("signing in");
+            log.info("Signing in to garmin connect");
             Response response = page.navigate(this.garmin_connect_signin_url);
             page.waitForTimeout(Math.random() * 100);
             if (!response.ok()) {
@@ -91,19 +91,18 @@ public class GarminDownloader implements ActivityDownloader {
 //        FrameLocator signinFrame = page.frameLocator("#gauth-widget-frame-gauth-widget");
             page.locator("#email").waitFor();
             page.locator("#email").fill(this.Username);
-            page.waitForTimeout(100 + Math.random() * 100);
+//            page.waitForTimeout( Math.random() * 100);
             page.locator("#password").fill(this.Password);
-            page.waitForTimeout(100 + Math.random() * 100);
+            page.waitForTimeout(Math.random() * 100);
             page.getByTestId("g__button").click();
-//        page.locator("#login-btn-signin").click();
+//        page.locator("#garminLogin-btn-signin").click();
             page.locator("#column-0").waitFor(); // wait for page to load
-            System.out.println("getting access token");
+            log.info("Getting garmin access token");
             // get access token
             String storageState = page.context().storageState();
             if (!getAccessToken(storageState)) return false;
-            this.state = context.storageState();
 
-//            System.out.println(this.state);
+            this.state = context.storageState();
             context.storageState(new BrowserContext.StorageStateOptions().setPath(statePath));
             page.close();
         }
@@ -137,10 +136,9 @@ public class GarminDownloader implements ActivityDownloader {
 
     @Override
     public List<ActivityListItemDTO> getActivitiesList() {
-        if (!login()) {
+        if (!garminLogin()) {
             System.out.println("failed to authenticate");
         }
-//        System.out.println(access_token);
 
         List<ActivityListItemDTO> activityList = new ArrayList<>();
         // get activity list
@@ -168,7 +166,7 @@ public class GarminDownloader implements ActivityDownloader {
             activityList = new GsonBuilder().create().fromJson(json, activityListType);
 
         } else {
-            System.out.println("couldn't retrieve activity list status:" + response.status());
+            log.warning("couldn't retrieve activity list status:" + response.status());
         }
 //        browser.close();
         return activityList;
@@ -178,11 +176,11 @@ public class GarminDownloader implements ActivityDownloader {
     public Activity getActivity(@NotNull @Positive Long ID) {
 
         if (!signedIn()) {
-            if (!login()) {
-                throw new RuntimeException("failed to login");
+            if (!garminLogin()) {
+                throw new RuntimeException("failed to garminLogin");
             }
         }
-        System.out.println("downloading Activity: " + ID);
+        log.info("downloading Activity: " + ID);
         BrowserContext context = browser.newContext(new Browser.NewContextOptions()
                 .setStorageState(state)
                 .setBaseURL(this.garmin_activity_service_url)
@@ -201,16 +199,14 @@ public class GarminDownloader implements ActivityDownloader {
             throw new RuntimeException(response.statusText() + "couldn't download activity file");
         }
         String json = response.text();
-//        String json = "{\"activityId\":8507418985,\"activityUUID\":{\"uuid\":\"c01e84ca-115c-440a-91a0-504f592b2834\"},\"activityName\":\"Marin County Cycling\",\"userProfileId\":101798589,\"isMultiSportParent\":false,\"activityTypeDTO\":{\"typeId\":2,\"typeKey\":\"cycling\",\"parentTypeId\":17,\"isHidden\":false,\"restricted\":false,\"trimmable\":true},\"eventTypeDTO\":{\"typeId\":9,\"typeKey\":\"uncategorized\",\"sortOrder\":10},\"accessControlRuleDTO\":{\"typeId\":2,\"typeKey\":\"private\"},\"timeZoneUnitDTO\":{\"unitId\":121,\"unitKey\":\"America/Los_Angeles\",\"factor\":0.0,\"timeZone\":\"America/Los_Angeles\"},\"metadataDTO\":{\"isOriginal\":true,\"deviceApplicationInstallationId\":894696,\"agentApplicationInstallationId\":null,\"agentString\":null,\"fileFormat\":{\"formatId\":7,\"formatKey\":\"fit\"},\"associatedCourseId\":null,\"lastUpdateDate\":\"2022-11-26T04:13:16.0\",\"uploadedDate\":\"2022-03-23T02:34:39.0\",\"videoUrl\":null,\"hasPolyline\":true,\"hasChartData\":true,\"hasHrTimeInZones\":true,\"hasPowerTimeInZones\":false,\"userInfoDto\":{\"userProfilePk\":101798589,\"displayname\":\"7472e467-1faf-4e23-bc92-8af59c386f6b\",\"fullname\":\"Bassem\",\"profileImageUrlLarge\":null,\"profileImageUrlMedium\":\"https://s3.amazonaws.com/garmin-connect-prod/profile_images/30fba2f4-3c23-48c4-8bed-506f7d72fbd5-101798589.png\",\"profileImageUrlSmall\":\"https://s3.amazonaws.com/garmin-connect-prod/profile_images/e247b616-4d40-46b4-9f55-c893b0fe32a7-101798589.png\",\"userPro\":false},\"childIds\":[],\"childActivityTypes\":[],\"sensors\":[],\"activityImages\":[],\"manufacturer\":\"GARMIN\",\"diveNumber\":null,\"lapCount\":13,\"associatedWorkoutId\":null,\"isAtpActivity\":null,\"deviceMetaDataDTO\":{\"deviceId\":\"3352844860\",\"deviceTypePk\":36817,\"deviceVersionPk\":894696},\"hasIntensityIntervals\":false,\"hasSplits\":false,\"eBikeMaxAssistModes\":null,\"eBikeBatteryUsage\":null,\"eBikeBatteryRemaining\":null,\"eBikeAssistModeInfoDTOList\":null,\"calendarEventInfo\":null,\"autoCalcCalories\":false,\"favorite\":false,\"manualActivity\":false,\"runPowerWindDataEnabled\":null,\"trimmed\":false,\"personalRecord\":false,\"gcj02\":false,\"elevationCorrected\":true},\"summaryDTO\":{\"startTimeLocal\":\"2022-03-22T13:10:20.0\",\"startTimeGMT\":\"2022-03-22T20:10:20.0\",\"startLatitude\":37.83193412236869,\"startLongitude\":-122.48024803586304,\"distance\":97854.03,\"duration\":17125.906,\"movingDuration\":16849.0,\"elapsedDuration\":22948.664,\"elevationGain\":422.73,\"elevationLoss\":475.33,\"maxElevation\":67.6,\"minElevation\":-6.2,\"averageSpeed\":5.714000225067138,\"averageMovingSpeed\":5.8077055759985745,\"maxSpeed\":11.710000038146973,\"calories\":2477.0,\"bmrCalories\":379.0,\"averageHR\":154.0,\"maxHR\":185.0,\"endLatitude\":37.808159943670034,\"endLongitude\":-122.42804076522589,\"maxVerticalSpeed\":3.799999952316284,\"waterEstimated\":1734.0,\"minActivityLapDuration\":263.213},\"locationName\":\"Marin County\"}\n";
-//        System.out.println(json);
         GarminActivityDTO activityDTO = new GsonBuilder().create().fromJson(json, GarminActivityDTO.class);
 //        ModelMapper modelMapper = new ModelMapper();
 //        modelMapper.getConfiguration().setAmbiguityIgnored(true);
 //        modelMapper.getConfiguration().setSkipNullEnabled(true);
 //        Activity activity = modelMapper.map(activityDTO, Activity.class);
 //        ActivityListItemDTO dto = modelMapper.map(activityDTO, ActivityListItemDTO.class);
-        Activity activity = DTOmapper.apply(activityDTO);
-        return activity;
+//        Activity activity = DTOmapper.apply(activityDTO);
+        return ActivityMapper.MAPPER.toEntity(activityDTO);// FIXME: 5/13/2023 
 
     }
 
@@ -223,17 +219,17 @@ public class GarminDownloader implements ActivityDownloader {
      */
     @Override
     public byte[] downloadActivityRoute(@NotNull @Positive Long id) {
-
+        // TODO: 5/13/2023 remove local file storage
         String filePath = "activities_samples/" + id + ".gpx";
         Path path = Paths.get(filePath);
 
         if (!Files.exists(path)) {
             if (!signedIn()) {
-                if (!login()) {
-                    throw new RuntimeException("failed to login");
+                if (!garminLogin()) {
+                    throw new RuntimeException("failed to garminLogin");
                 }
             }
-            System.out.println("downloading: " + id);
+            log.info("downloading GPX file for Activity: " + id);
             BrowserContext context = browser.newContext(new Browser.NewContextOptions()
                     .setStorageState(state)
                     .setBaseURL(this.garmin_activity_download_gpx_url)
@@ -253,7 +249,7 @@ public class GarminDownloader implements ActivityDownloader {
             try {
                 Files.write(path, response.body());
             } catch (IOException e) {
-                throw new RuntimeException("couldn't save file to:" + path);
+                throw new RuntimeException("couldn't saveUser file to:" + path);
             }
         }
         try {

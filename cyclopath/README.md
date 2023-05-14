@@ -45,12 +45,12 @@ longest distance, number of activities, etc.
 
 ### Dynamo DB Single Table
 
-| Primary Key | Sort Key         | Attributes                                                                                  |
-|-------------|------------------|---------------------------------------------------------------------------------------------|
-| UserUUID    | PROFILE#username | {Username:STRING, Email: STRING, Password:STRING, ID:LONG, weight:FLOAT, Hight(cm):INT,...} |
-| UserUUID    | STATS#username   | {LongestRideID:LONG, numActivities:INT, ...}                                                |
-| UserUUID    | ACTIVITY#ID      | {Name, CreationTime, Distance, CaloriesBurned, Comments, Route:geoJSON}                     | 
-| UserUUID    | ACTIVITYLIST     | {Activity1ID,Activity2ID,...}                                                               |
+| Primary Key | Sort Key     | Attributes                                                                                  |
+|-------------|--------------|---------------------------------------------------------------------------------------------|
+| UserUUID    | PROFILE      | {Username:STRING, Email: STRING, Password:STRING, ID:LONG, weight:FLOAT, Hight(cm):INT,...} |
+| UserUUID    | STATS        | {LongestRideID:LONG, numActivities:INT, ...}                                                |
+| UserUUID    | ACTIVITY#ID  | {Name, CreationTime, Distance, CaloriesBurned, Comments, Route:geoJSON}                     | 
+| UserUUID    | ACTIVITYLIST | {Activity1ID,Activity2ID,...}                                                               |
 
 - activity id is the same as unix time and is only unique per user
 - this is useful for getting an activity by id or for getting activities within a date range

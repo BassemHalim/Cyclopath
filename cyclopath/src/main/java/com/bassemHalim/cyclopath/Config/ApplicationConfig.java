@@ -1,6 +1,6 @@
 package com.bassemHalim.cyclopath.Config;
 
-import com.bassemHalim.cyclopath.User.UserRepository;
+import com.bassemHalim.cyclopath.Repositoy.SingleTableDB;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,11 +15,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 @RequiredArgsConstructor
 public class ApplicationConfig {
-    private final UserRepository userRepository;
+    private final SingleTableDB userRepository;
 
     @Bean
     public UserDetailsService userDetailsService() {
+//        return username -> userRepository.getUserByEmail(username);
         return username -> userRepository.getUserByEmail(username);
+
         // TODO handle exceptions
     }
 

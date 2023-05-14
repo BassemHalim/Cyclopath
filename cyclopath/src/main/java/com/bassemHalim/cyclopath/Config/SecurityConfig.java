@@ -23,8 +23,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf().disable()
                 .authorizeHttpRequests().requestMatchers(
-                        "/auth/**",
-                        "/User"
+                        "/auth/**"
                 ).permitAll() // whitelisted endpoints
                 .anyRequest().authenticated()
                 .and()

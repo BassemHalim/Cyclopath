@@ -1,7 +1,7 @@
-package com.bassemHalim.cyclopath.ActivityDownloader;
+package com.bassemHalim.cyclopath.Activity.ActivityDownloader;
 
 import com.bassemHalim.cyclopath.Activity.Activity;
-import com.bassemHalim.cyclopath.ActivityListItemDTO.ActivityListItemDTO;
+import com.bassemHalim.cyclopath.Activity.ActivityDownloader.GarminActivityListItemDTO.ActivityListItemDTO;
 
 import java.util.List;
 

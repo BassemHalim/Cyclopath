@@ -1,5 +1,6 @@
 package com.bassemHalim.cyclopath.User;
 
+import com.bassemHalim.cyclopath.Repositoy.SingleTableDB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
@@ -8,7 +9,7 @@ import org.springframework.stereotype.Service;
 @Repository
 public class UserService {
     @Autowired
-    private UserRepository userRepo;
+    private SingleTableDB userRepo;
 
     public void testSave() {
         User gosling = new User(
@@ -16,7 +17,7 @@ public class UserService {
                 "pwd1",
                 Role.USER
         );
-        userRepo.save(gosling);
+        userRepo.saveUser(gosling);
 
     }
 

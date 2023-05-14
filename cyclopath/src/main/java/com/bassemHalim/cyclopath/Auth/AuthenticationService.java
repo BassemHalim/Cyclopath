@@ -1,9 +1,9 @@
 package com.bassemHalim.cyclopath.Auth;
 
 import com.bassemHalim.cyclopath.Config.JwtService;
+import com.bassemHalim.cyclopath.Repositoy.SingleTableDB;
 import com.bassemHalim.cyclopath.User.Role;
 import com.bassemHalim.cyclopath.User.User;
-import com.bassemHalim.cyclopath.User.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
-    private final UserRepository repository;
+    private final SingleTableDB repository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
@@ -26,7 +26,7 @@ public class AuthenticationService {
 //                .build();
         if (repository.getUserByEmail(request.getEmail()) == null) {
             User user = new User(request.getEmail(), passwordEncoder.encode(request.getPassword()), Role.USER);
-            repository.save(user);
+            repository.saveUser(user);
 
             var jwtToken = jwtService.generateToken(user);
             return AuthenticationResponse.builder()

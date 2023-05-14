@@ -1,4 +1,4 @@
-package com.bassemHalim.cyclopath.ActivityDownloader.GarminActivityDTO;
+package com.bassemHalim.cyclopath.Activity.ActivityDownloader.GarminActivityDTO;
 
 import lombok.Data;
 

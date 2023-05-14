@@ -10,8 +10,8 @@ public class CompositeKeyConverter implements DynamoDBTypeConverter<String, Comp
     }
 
     @Override
-    public CompositeKey unconvert(String object) {
-        String[] parts = object.split("#");
+    public CompositeKey unconvert(String key) {
+        String[] parts = key.split("#");
         return new CompositeKey(parts[0], parts[1]);
     }
 }

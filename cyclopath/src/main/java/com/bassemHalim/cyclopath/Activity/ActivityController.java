@@ -1,6 +1,5 @@
 package com.bassemHalim.cyclopath.Activity;
 
-import com.bassemHalim.cyclopath.ActivityListItemDTO.ActivityListItemDTO;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,25 +18,15 @@ public class ActivityController {
     private ActivityService activityService;
 
     @GetMapping("/activity-list")
-    ResponseEntity<List<ActivityListItemDTO>> getActivityList() {
-        List<ActivityListItemDTO> activityList = activityService.getActivityList();
-//        for (Activity activity : activityList) {
-//            byte[] geoJSON_gzip = service.downloadActivityRoute(activity.getActivityId());
-//            activity.setGeoJSON_gzip(geoJSON_gzip);
-//            try {
-//                TimeUnit.MILLISECONDS.sleep((long) Math.random() * 100);
-//            } catch (InterruptedException ie) {
-//                Thread.currentThread().interrupt();
-//            }
-//        }
-//        activityRepository.batchSave(activityList);
+    ResponseEntity<List<ActivityDTO>> getActivityList() {
+        List<ActivityDTO> activityList = activityService.getActivityList();
         return ResponseEntity.ok(activityList);
     }
 
 
     @GetMapping("/{id}")
-    Activity getActivity(@PathVariable Long id) {
-        return activityService.getActiviy(id);
+    ResponseEntity<ActivityDTO> getActivity(@PathVariable Long id) {
+        return ResponseEntity.ok(activityService.getActivity(id));
     }
 
 
