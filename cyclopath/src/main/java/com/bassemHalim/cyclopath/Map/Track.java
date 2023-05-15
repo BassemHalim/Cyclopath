@@ -22,7 +22,8 @@ import java.util.List;
 public class Track implements Feature {
     public enum TrackType {
         walking,
-        cycling
+        cycling,
+        incident_detected
     }
 
     @Getter

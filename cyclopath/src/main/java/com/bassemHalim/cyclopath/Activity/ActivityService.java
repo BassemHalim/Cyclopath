@@ -6,6 +6,7 @@ import com.bassemHalim.cyclopath.Activity.ActivityDownloader.GarminActivityListI
 import com.bassemHalim.cyclopath.Repositoy.SingleTableDB;
 import com.bassemHalim.cyclopath.User.User;
 import com.bassemHalim.cyclopath.Utils.CompositeKey;
+import com.bassemHalim.cyclopath.Utils.Compressor;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.extern.java.Log;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -96,8 +98,14 @@ public class ActivityService {
         ActivitiesMetatdata activitiesMetatdata = getActivitiesMetatdata();
         if (activitiesMetatdata.getSavedActivities().contains(ID)) {
             // it's in the DB
-
             Activity activity = repository.getActivityById(UUID, new CompositeKey("ACTIVITY", ID.toString()));
+            if (activity.getGeoJSON_gzip() == null) {
+                activity.setGeoJSON_gzip(garminDownloader.downloadActivityRoute(ID));
+                repository.saveActivity(activity);
+            }
+            byte[] decompressed = Compressor.decompress(activity.getGeoJSON_gzip());
+            String decompressedString = new String(decompressed, StandardCharsets.UTF_8);
+            System.out.println(decompressedString);
             return ActivityMapper.MAPPER.toDTO(activity);
         }
         // need to update the list of activities and download the new ones
@@ -112,5 +120,6 @@ public class ActivityService {
         return ActivityMapper.MAPPER.toDTO(activity);
     }
 
-
+    public void saveActivity(Activity activity) {
+    }
 }

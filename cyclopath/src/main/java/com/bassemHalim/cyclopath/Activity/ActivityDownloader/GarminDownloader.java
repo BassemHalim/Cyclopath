@@ -5,6 +5,7 @@ import com.bassemHalim.cyclopath.Activity.Activity;
 import com.bassemHalim.cyclopath.Activity.ActivityDownloader.GarminActivityDTO.GarminActivityDTO;
 import com.bassemHalim.cyclopath.Activity.ActivityDownloader.GarminActivityListItemDTO.ActivityListItemDTO;
 import com.bassemHalim.cyclopath.Activity.ActivityMapper;
+import com.bassemHalim.cyclopath.Utils.Compressor;
 import com.bassemHalim.cyclopath.geoJSON.geoJSON;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.GsonBuilder;
@@ -18,7 +19,6 @@ import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.GZIPOutputStream;
 
 
 /**
@@ -258,24 +257,13 @@ public class GarminDownloader implements ActivityDownloader {
             geoJSON geojson = file.GPXtoGeoJson(gpx);
             ObjectMapper mapper = new ObjectMapper();
 
-            return gzip(mapper.writeValueAsBytes(geojson));
+            return Compressor.compress(mapper.writeValueAsBytes(geojson));
         } catch (Exception e) {
             System.out.println(e);
         }
         return null;
     }
 
-    private byte[] gzip(byte[] data) {
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            GZIPOutputStream out = new GZIPOutputStream(bos);
-            out.write(data);
-            out.close();
-            return bos.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
 }
 
