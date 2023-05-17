@@ -1,11 +1,5 @@
 package com.bassemHalim.cyclopath.Repositoy;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBSaveExpression;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.ExpectedAttributeValue;
-import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughputExceededException;
 import com.bassemHalim.cyclopath.Activity.ActivitiesMetatdata;
 import com.bassemHalim.cyclopath.Activity.Activity;
 import com.bassemHalim.cyclopath.User.User;
@@ -13,25 +7,39 @@ import com.bassemHalim.cyclopath.Utils.CompositeKey;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Repository;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughputExceededException;
 
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
 @Log
 public class SingleTableDB {
 
-    private final DynamoDBMapper dynamoDBMapper;
+    private final DynamoDbClient dynamoDbClient;
+    private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
+    private final String TABLE_NAME = "Cyclopath";
+
 
     // ----------------User-------------------
     public void saveUser(User user) {
         boolean success = false;
         do {
             try {
-                dynamoDBMapper.save(user);
+                dynamoDbEnhancedClient.table(TABLE_NAME, TableSchema.fromBean(User.class)).putItem(user);
                 success = true;
             } catch (ProvisionedThroughputExceededException e) {
                 System.out.println("exceeded provisioned WCU going to sleep for a bit");
@@ -44,31 +52,27 @@ public class SingleTableDB {
         } while (!success);
     }
 
-    public User getUserByEmail(String Email) {
-        User user = new User();
-        user.setEmail(Email);
-        DynamoDBQueryExpression<User> queryExpression =
-                new DynamoDBQueryExpression<User>()
-                        .withHashKeyValues(user)
-                        .withLimit(2) // to verify uniqueness
-                        .withIndexName("email-index")
-                        .withConsistentRead(false);
+    public User getUserByEmail(String email) {
+        User user = dynamoDbEnhancedClient.table(TABLE_NAME, TableSchema.fromBean(User.class))
+                .execute(r -> r.query(q -> q.keyConditionExpression("email = :val")
+                        .expressionValues(Collections.singletonMap(":val", AttributeValue.builder().s(email).build()))))
+                .items()
+                .stream()
+                .findFirst()
+                .orElse(null);
 
-        List<User> users = dynamoDBMapper.query(User.class, queryExpression);
-        if (users.size() > 0) {
-            // assumes emails are unique
-            return users.get(0);
-        }
-        return null;
+        return user;
     }
 
     public User getUserByUUID(String uuid) {
-        return dynamoDBMapper.load(User.class, uuid);
+        return dynamoDbEnhancedClient.table(TABLE_NAME, TableSchema.fromBean(User.class)).getItem(r -> r.key(k -> k.partitionValue(uuid)));
     }
 
     public void deleteUser(String uuid) {
-        User tmp = getUserByUUID(uuid);
-        dynamoDBMapper.delete(tmp);
+        User user = getUserByUUID(uuid);
+        if (user != null) {
+            dynamoDbEnhancedClient.table(TABLE_NAME, TableSchema.fromBean(User.class)).deleteItem(r -> r.key(k -> k.partitionValue(uuid)));
+        }
     }
 
     //------------------Activity------------------
@@ -76,7 +80,7 @@ public class SingleTableDB {
         boolean success = false;
         do {
             try {
-                dynamoDBMapper.save(activity);
+                dynamoDbEnhancedClient.table(TABLE_NAME, TableSchema.fromBean(Activity.class)).putItem(activity);
                 success = true;
             } catch (ProvisionedThroughputExceededException e) {
                 System.out.println("exceeded provisioned WCU going to sleep for a bit");
@@ -90,51 +94,40 @@ public class SingleTableDB {
     }
 
     public void batchSaveActivities(List<Activity> activityList) {
-        log.log(new LogRecord(Level.INFO, "saving " + activityList.size() + " activities"));
-
-//        DynamoDBMapperConfig config = DynamoDBMapperConfig.builder()
-//                .withSaveBehavior(DynamoDBMapperConfig.SaveBehavior.CLOBBER).build();
-
-        boolean success = false;
-        do {
-            try {
-                dynamoDBMapper.batchSave(activityList);
-                success = true;
-            } catch (ProvisionedThroughputExceededException e) {
-                System.out.println("exceeded provisioned WCU going to sleep for a bit");
-                try {
-                    TimeUnit.SECONDS.sleep(5);
-                } catch (InterruptedException ie) {
-                    log.severe("sleep interrupted");
-                    Thread.currentThread().interrupt();
-                }
-            }
-        } while (!success);
-    }
-
-    public Activity getActivityById(String PK, CompositeKey SK) {
-        return dynamoDBMapper.load(Activity.class, PK, SK);
-    }
-
-    public void deleteActivity(String PK, CompositeKey SK) {
-        Activity activity = getActivityById(PK, SK);
-        if (activity != null)
-            dynamoDBMapper.delete(activity);
+        WriteBatch.builder(Activity.class)
+                .mappedTableResource(dynamoDbEnhancedClient.table(TABLE_NAME, TableSchema.fromBean(Activity.class)))
+                .writeRequests(activityList.stream()
+                        .map(activity -> PutItemEnhancedRequest.builder(Activity.class).item(activity).build())
+                        .collect(Collectors.toList()))
+                .build()
+                .execute();
     }
 
 
-    public void updateActivity(Long ID, Activity activity) {
-        // @TODO fix this
-        dynamoDBMapper.save(activity,
-                new DynamoDBSaveExpression()
-                        .withExpectedEntry("activityID",
-                                new ExpectedAttributeValue(new AttributeValue().withS(ID.toString()))
-                        ));
-
+    public Activity getActivityById(String pk, CompositeKey sk) {
+        return dynamoDbEnhancedClient.table(TABLE_NAME, TableSchema.fromBean(Activity.class))
+                .getItem(r -> r.key(k -> k.partitionValue(pk).sortValue(sk)));
     }
+
+
+    public void deleteActivity(String pk, CompositeKey sk) {
+        Activity activity = getActivityById(pk, sk);
+        if (activity != null) {
+            dynamoDbEnhancedClient.table(TABLE_NAME, TableSchema.fromBean(Activity.class))
+                    .deleteItem(r -> r.key(k -> k.partitionValue(pk).sortValue(sk)));
+        }
+    }
+
+
+    public void updateActivity(Long id, Activity activity) {
+        dynamoDbEnhancedClient.table(TABLE_NAME, TableSchema.fromBean(Activity.class))
+                .putItem(activity, r -> r.conditionExpression("activityID = :val")
+                        .expressionValues(Collections.singletonMap(":val", AttributeValue.builder().n(id.toString()).build())));
+    }
+
 
     public void saveActivitiesMetadata(ActivitiesMetatdata activity) {
-        dynamoDBMapper.save(activity);
+        dynamoDbEnhancedClient.table(TABLE_NAME, TableSchema.fromBean(ActivitiesMetatdata.class)).putItem(activity);
     }
 
     /**
@@ -144,14 +137,8 @@ public class SingleTableDB {
      * @return ActivitiesMetadata is found else null
      */
     public ActivitiesMetatdata getActivityMetadata(String UUID) {
-        ActivitiesMetatdata activitiesMetatdata = null;
-        try {
-            activitiesMetatdata = dynamoDBMapper.load(ActivitiesMetatdata.class, UUID, "METADATA");
-        } catch (Exception e) {
-            log.severe(e.toString());
-        }
-        return activitiesMetatdata;
+        return dynamoDbEnhancedClient.table(TABLE_NAME, TableSchema.fromBean(ActivitiesMetatdata.class))
+                .getItem(r -> r.key(k -> k.partitionValue(UUID).sortValue("METADATA")));
     }
-
 
 }

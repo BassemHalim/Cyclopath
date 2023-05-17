@@ -1,7 +1,6 @@
 
 package com.bassemHalim.cyclopath.Activity;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.*;
 import com.bassemHalim.cyclopath.User.User;
 import com.bassemHalim.cyclopath.Utils.CompositeKey;
 import com.bassemHalim.cyclopath.Utils.CompositeKeyConverter;
@@ -9,26 +8,25 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@DynamoDBTable(tableName = "Cyclopath")
-
+@DynamoDbBean
 public class Activity {
-    @DynamoDBAttribute(attributeName = "CyclopathPK")
+    //    @DynamoDbAttribute(value = "CyclopathPK")
     private String ownerUUID;
     private CompositeKey sortKey;
-    @DynamoDBIgnore
-    @DynamoDBAttribute(attributeName = "SK")
+    //    @DynamoDbAttribute(attributeName = "SK")
     private final String SK = "ACTIVITY";
-    @DynamoDBAttribute(attributeName = "activityID")
+    //    @DynamoDbAttribute(value = "activityID")
     private long activityId;
-    @DynamoDBAttribute(attributeName = "name")
+    //    @DynamoDbAttribute(value = "name")
     private String activityName;
-    @DynamoDBAttribute(attributeName = "avgHR")
+    //    @DynamoDbAttribute(attributeName = "avgHR")
     private double averageHR;
-    @DynamoDBAttribute(attributeName = "avgSpeed")
+    //    @DynamoDbAttribute(attributeName = "avgSpeed")
     private double averageSpeed;
     //    @DynamoDBAttribute(attributeName = "start")
 //    private long beginTimestamp;
@@ -41,9 +39,9 @@ public class Activity {
     private boolean elevationCorrected;
     private double elevationGain;
     private double elevationLoss;
-    @DynamoDBAttribute(attributeName = "endLat")
+    //    @DynamoDbAttribute(attributeName = "endLat")
     private double endLatitude;
-    @DynamoDBAttribute(attributeName = "endLon")
+    //    @DynamoDbAttribute(attributeName = "endLon")
     private double endLongitude;
     //    private boolean favorite;
     private boolean hasPolyline;
@@ -70,9 +68,9 @@ public class Activity {
 //    public boolean pr;
 //    public boolean purposeful;
 //    private int sportTypeId;
-    @DynamoDBAttribute(attributeName = "startLat")
+    @DynamoDbAttribute(attributeName = "startLat")
     private double startLatitude;
-    @DynamoDBAttribute(attributeName = "startLon")
+    @DynamoDbAttribute(attributeName = "startLon")
     private double startLongitude;
     private String startTimeGMT;
     private String startTimeLocal;
@@ -82,7 +80,8 @@ public class Activity {
     private byte[] geoJSON_gzip;
 
     @DynamoDBTypeConverted(converter = CompositeKeyConverter.class) // FIXME: 5/12/2023
-    @DynamoDBRangeKey(attributeName = "CyclopathSK")
+    @DynamoDbSortKey
+    @DynamoDbAttribute(value = "CyclopathSK")
     public CompositeKey getSortKey() {
         if (sortKey == null) {
             sortKey = new CompositeKey(SK, String.valueOf(activityId));
@@ -95,7 +94,8 @@ public class Activity {
         sortKey = key;
     }
 
-    @DynamoDBHashKey(attributeName = "CyclopathPK")
+    @DynamoDbPartitionKey
+    @DynamoDbAttribute(value = "CyclopathPK")
     public String getOwnerUUID() {
         if (ownerUUID == null) {
             ownerUUID = ((User) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
@@ -103,7 +103,7 @@ public class Activity {
         return ownerUUID;
     }
 
-    @DynamoDBIgnore
+    @DynamoDbIgnore
     public String getSK() {
         return this.SK;
     }
