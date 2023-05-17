@@ -8,10 +8,10 @@ import java.util.List;
 public interface ActivityDownloader {
 //    boolean login();
 
-    List<ActivityListItemDTO> getActivitiesList();
+    List<ActivityListItemDTO> getActivitiesList(int start, int limit);
 
     Activity getActivity(Long ID);
 
-    byte[] downloadActivityRoute(Long id);
+    byte[] getActivityRoute(Long id);
 
 }

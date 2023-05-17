@@ -3,10 +3,7 @@ package com.bassemHalim.cyclopath.Activity;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -18,8 +15,10 @@ public class ActivityController {
     private ActivityService activityService;
 
     @GetMapping("/activity-list")
-    ResponseEntity<List<ActivityDTO>> getActivityList() {
-        List<ActivityDTO> activityList = activityService.getActivityList();
+    ResponseEntity<List<ActivityDTO>> getActivityList(
+            @RequestParam(required = false, defaultValue = "10") int limit,
+            @RequestParam(required = false, defaultValue = "0") int start) {
+        List<ActivityDTO> activityList = activityService.getActivityList(start, limit);
         return ResponseEntity.ok(activityList);
     }
 
@@ -29,5 +28,10 @@ public class ActivityController {
         return ResponseEntity.ok(activityService.getActivity(id));
     }
 
+    @DeleteMapping("/{id}")
+    ResponseEntity<String> deleteActivity(@PathVariable Long id) {
+        activityService.deleteActivity(id);
+        return ResponseEntity.ok("activity deleted");
+    }
 
 }

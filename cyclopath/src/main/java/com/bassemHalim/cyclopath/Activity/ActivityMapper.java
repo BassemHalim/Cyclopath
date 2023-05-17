@@ -18,7 +18,10 @@ public interface ActivityMapper {
 
     ActivityDTO toDTO(ActivityListItemDTO activityListItemDTOctivityListItem);
 
-    List<ActivityDTO> toDTO(List<ActivityListItemDTO> ActivityList);
+    List<ActivityDTO> ActivitytoDTOList(List<Activity> c);
+
+    List<ActivityDTO> ActivityListItemDTOtoDTOList(List<ActivityListItemDTO> list);
+
 
     @Mapping(source = "activityId", target = "activityId")
     @Mapping(source = "activityName", target = "activityName")

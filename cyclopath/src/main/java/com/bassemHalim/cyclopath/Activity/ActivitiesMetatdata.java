@@ -48,4 +48,7 @@ public class ActivitiesMetatdata {
         return savedActivities;
     }
 
+    public void removeActivity(Long id) {
+        savedActivities.remove(id);
+    }
 }

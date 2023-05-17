@@ -116,10 +116,12 @@ public class SingleTableDB {
         return dynamoDBMapper.load(Activity.class, PK, SK);
     }
 
-//    public void deleteActivity(Long ID) {
-//        Activity tmp = getActivityById(ID);
-//        dynamoDBMapper.delete(tmp);
-//    }
+    public void deleteActivity(String PK, CompositeKey SK) {
+        Activity activity = getActivityById(PK, SK);
+        if (activity != null)
+            dynamoDBMapper.delete(activity);
+    }
+
 
     public void updateActivity(Long ID, Activity activity) {
         // @TODO fix this
@@ -150,4 +152,6 @@ public class SingleTableDB {
         }
         return activitiesMetatdata;
     }
+
+
 }

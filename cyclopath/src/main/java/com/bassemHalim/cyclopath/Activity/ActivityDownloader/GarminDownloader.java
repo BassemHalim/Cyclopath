@@ -7,6 +7,7 @@ import com.bassemHalim.cyclopath.Activity.ActivityDownloader.GarminActivityListI
 import com.bassemHalim.cyclopath.Activity.ActivityMapper;
 import com.bassemHalim.cyclopath.Utils.Compressor;
 import com.bassemHalim.cyclopath.geoJSON.geoJSON;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -19,8 +20,8 @@ import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -67,7 +68,9 @@ public class GarminDownloader implements ActivityDownloader {
 
 
     private boolean garminLogin() {
+        // TODO: 5/16/2023 make faster without being detected as bot
         // Login
+        log.info("starting playwright");
         Path statePath = Paths.get("state.json");
         browser = playwright.firefox().launch(new BrowserType.LaunchOptions().setSlowMo(50).setHeadless(true));
         BrowserContext context = browser.newContext();
@@ -83,12 +86,12 @@ public class GarminDownloader implements ActivityDownloader {
         if (!getAccessToken(page.context().storageState())) {
             log.info("Signing in to garmin connect");
             Response response = page.navigate(this.garmin_connect_signin_url);
-            page.waitForTimeout(Math.random() * 100);
+            page.locator("#email").waitFor();
             if (!response.ok()) {
                 return false;
             }
 //        FrameLocator signinFrame = page.frameLocator("#gauth-widget-frame-gauth-widget");
-            page.locator("#email").waitFor();
+//            page.locator("#email").waitFor();
             page.locator("#email").fill(this.Username);
 //            page.waitForTimeout( Math.random() * 100);
             page.locator("#password").fill(this.Password);
@@ -105,10 +108,12 @@ public class GarminDownloader implements ActivityDownloader {
             context.storageState(new BrowserContext.StorageStateOptions().setPath(statePath));
             page.close();
         }
+        log.info("Garmin login successful");
         return true;
     }
 
     private boolean getAccessToken(String storageState) {
+        log.info("Trying to extract access token");
         this.state = storageState;
         Pattern pattern = Pattern.compile("access_token"); // str" \"access_token\":\""
         Pattern pattern1 = Pattern.compile("access_token.{5}[a-zA-z0-9.-]*\"");
@@ -134,7 +139,7 @@ public class GarminDownloader implements ActivityDownloader {
     }
 
     @Override
-    public List<ActivityListItemDTO> getActivitiesList() {
+    public List<ActivityListItemDTO> getActivitiesList(int start, int limit) {
         if (!garminLogin()) {
             System.out.println("failed to authenticate");
         }
@@ -143,8 +148,8 @@ public class GarminDownloader implements ActivityDownloader {
         // get activity list
         BrowserContext context = browser.newContext(new Browser.NewContextOptions().setStorageState(state));
         APIResponse response = context.request().get(this.garmin_activity_list_url, RequestOptions.create()
-                .setQueryParam("limit", 1000)
-                .setQueryParam("start", 0)
+                .setQueryParam("limit", limit)
+                .setQueryParam("start", start)
                 .setHeader("authorization", "Bearer " + this.access_token)
                 .setHeader("di-backend", "connectapi.garmin.com")
                 .setHeader("dnt", "1")
@@ -217,51 +222,42 @@ public class GarminDownloader implements ActivityDownloader {
      * @return returns the gzipped geoJSON route
      */
     @Override
-    public byte[] downloadActivityRoute(@NotNull @Positive Long id) {
+    public byte[] getActivityRoute(@NotNull @Positive Long id) {
         // TODO: 5/13/2023 remove local file storage
-        String filePath = "activities_samples/" + id + ".gpx";
-        Path path = Paths.get(filePath);
-
-        if (!Files.exists(path)) {
-            if (!signedIn()) {
-                if (!garminLogin()) {
-                    throw new RuntimeException("failed to garminLogin");
-                }
-            }
-            log.info("downloading GPX file for Activity: " + id);
-            BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-                    .setStorageState(state)
-                    .setBaseURL(this.garmin_activity_download_gpx_url)
-            );
-            APIResponse response = context.request().get(id.toString(), RequestOptions.create()
-                    .setHeader("authorization", "Bearer " + this.access_token)
-                    .setHeader("di-backend", "connectapi.garmin.com")
-                    .setHeader("dnt", "1")
-                    .setHeader("nk", "NT")
-                    .setHeader("referer", "https://connect.garmin.com/modern/activity/" + id)
-                    .setHeader("x-app-ver", "4.65.3.0")
-            );
-
-            if (!response.ok()) {
-                throw new RuntimeException(response.statusText() + "couldn't download activity file");
-            }
-            try {
-                Files.write(path, response.body());
-            } catch (IOException e) {
-                throw new RuntimeException("couldn't saveUser file to:" + path);
+        // TODO: 5/16/2023 TEST 
+        if (!signedIn()) {
+            if (!garminLogin()) {
+                throw new RuntimeException("failed to garminLogin");
             }
         }
+        log.info("downloading GPX file for Activity: " + id);
+        BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+                .setStorageState(state)
+                .setBaseURL(this.garmin_activity_download_gpx_url)
+        );
+        APIResponse response = context.request().get(id.toString(), RequestOptions.create()
+                .setHeader("authorization", "Bearer " + this.access_token)
+                .setHeader("di-backend", "connectapi.garmin.com")
+                .setHeader("dnt", "1")
+                .setHeader("nk", "NT")
+                .setHeader("referer", "https://connect.garmin.com/modern/activity/" + id)
+                .setHeader("x-app-ver", "4.65.3.0")
+        );
+
+        if (!response.ok()) {
+            throw new RuntimeException(response.statusText() + "couldn't download activity file");
+        }
+        String GPX = new String(response.body(), StandardCharsets.UTF_8);
+        geoJSON file = new geoJSON();
+        geoJSON geojson = file.GPXtoGeoJson(GPX);// FIXME: 5/16/2023 change method to static
+        ObjectMapper mapper = new ObjectMapper();
+
         try {
-            String gpx = Files.readString(path);
-            geoJSON file = new geoJSON();
-            geoJSON geojson = file.GPXtoGeoJson(gpx);
-            ObjectMapper mapper = new ObjectMapper();
-
             return Compressor.compress(mapper.writeValueAsBytes(geojson));
-        } catch (Exception e) {
-            System.out.println(e);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
-        return null;
+
     }
 
 
