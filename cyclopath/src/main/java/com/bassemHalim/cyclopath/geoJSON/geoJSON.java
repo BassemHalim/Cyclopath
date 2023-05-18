@@ -30,7 +30,7 @@ public class geoJSON extends JSONObject {
      * @param gpx
      * @return
      */
-    public geoJSON GPXtoGeoJson(String gpx) {
+    public geoJSON fromGPX(String gpx) {
         JSONObject json = XML.toJSONObject(gpx).getJSONObject("gpx");
         String time = json.getJSONObject("metadata").getString("time");
         JSONObject jsonTrack = json.getJSONObject("trk");

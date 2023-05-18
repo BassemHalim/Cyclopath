@@ -1,5 +1,6 @@
 package com.bassemHalim.cyclopath.Auth;
 
+import com.bassemHalim.cyclopath.Activity.ActivityDownloader.GarminDownloader;
 import com.bassemHalim.cyclopath.Config.JwtService;
 import com.bassemHalim.cyclopath.Repositoy.SingleTableDB;
 import com.bassemHalim.cyclopath.User.Role;
@@ -17,6 +18,9 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+
+    private final GarminDownloader downloader; // @TODO delete
+
 
     public AuthenticationResponse register(RegisterRequest request) {
 //        User user = User.builder()
@@ -44,8 +48,14 @@ public class AuthenticationService {
                 )
         );
         // authenticated
-        User user = repository.getUserByEmail(request.getEmail()); //@TODO handle error
+        User user = repository.getUserByEmail(request.getEmail());
+        if (user == null) return null;
         String jwtToken = jwtService.generateToken(user);
+
+//        new Thread(() -> {
+//            downloader.garminLogin();
+//        }).start();
+
         return AuthenticationResponse.builder()
                 .token(jwtToken)
                 .build();

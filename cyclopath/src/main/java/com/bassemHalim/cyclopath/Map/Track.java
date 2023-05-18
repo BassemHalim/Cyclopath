@@ -5,12 +5,14 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,8 +31,11 @@ public class Track implements Feature {
     @Getter
     @AllArgsConstructor
     public static class Coordinate {
+        @NotNull
         private double latitude;
+        @NotNull
         private double longitude;
+        @NotNull
         private double elevation;
     }
 
@@ -55,10 +60,9 @@ public class Track implements Feature {
         this.coordinates = new ArrayList<>();
     }
 
-    public void appendData(@NotNull String time, @Positive Integer hr,
-                           @NotNull @NotEmpty Coordinate coordinate) {
+    public void appendData(@NotNull @DateTimeFormat String time, @Positive Integer hr,
+                           @NotNull @NotEmpty @Valid Coordinate coordinate) {
 
-        //@TODO verify validity
         this.times.add(time);
         this.heartRates.add(hr);
         this.coordinates.add(coordinate);

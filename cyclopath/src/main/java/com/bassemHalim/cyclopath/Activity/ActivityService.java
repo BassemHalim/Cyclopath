@@ -3,10 +3,12 @@ package com.bassemHalim.cyclopath.Activity;
 
 import com.bassemHalim.cyclopath.Activity.ActivityDownloader.ActivityDownloader;
 import com.bassemHalim.cyclopath.Activity.ActivityDownloader.GarminActivityListItemDTO.ActivityListItemDTO;
+import com.bassemHalim.cyclopath.Map.Route;
+import com.bassemHalim.cyclopath.Map.RouteDTO;
+import com.bassemHalim.cyclopath.Map.RouteMapper;
 import com.bassemHalim.cyclopath.Repositoy.SingleTableDB;
 import com.bassemHalim.cyclopath.User.User;
 import com.bassemHalim.cyclopath.Utils.CompositeKey;
-import com.bassemHalim.cyclopath.Utils.Compressor;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.extern.java.Log;
@@ -69,7 +71,7 @@ public class ActivityService {
     }
 
     private ActivitiesMetatdata getActivitiesMetatdata() {
-        String UUID = ((User) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
+        String UUID = getUuid();
         ActivitiesMetatdata savedActivities = repository.getActivityMetadata(UUID);
         if (savedActivities == null) {
             savedActivities = new ActivitiesMetatdata();
@@ -79,7 +81,16 @@ public class ActivityService {
         return savedActivities;
     }
 
+    private static String getUuid() {
+        return ((User) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
+    }
+
     public List<ActivityDTO> getActivityList(@NotNull @Positive int start, @NotNull @Positive int limit) {
+//        List<Activity> activityList = repository.batchGetActivity(limit, getUuid());
+//        for (Activity activity : activityList) {
+//            System.out.println(activity.getActivityId());
+//        }
+//        return ActivityMapper.MAPPER.ActivitytoDTOList(activityList);
         return syncActivities(start, limit);
     }
 
@@ -92,16 +103,23 @@ public class ActivityService {
         // if not get updated activity list from garmin
         // download the activity from garmin and saveUser it to dynamo
         // get activity list from dynamo
-        String UUID = ((User) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
+        String UUID = getUuid();
         ActivitiesMetatdata activitiesMetatdata = getActivitiesMetatdata();
         if (activitiesMetatdata.getSavedActivities().contains(ID)) {
             // it's in the DB
-            Activity activity = repository.getActivityById(UUID, new CompositeKey("ACTIVITY", ID.toString()));
-            if (activity.getGeoJSON_gzip() == null) {
-                activity.setGeoJSON_gzip(garminDownloader.getActivityRoute(ID));
+            Activity activity = repository.getActivity(UUID, new CompositeKey("ACTIVITY", ID.toString()));
+            if (activity.getGeoJSON_gzip() != null) {
+                // @TODO change later
+                Route route = Route.builder()
+                        .geoJSON_zip(activity.getGeoJSON_gzip())
+                        .activityID(ID)
+                        .build();
+                route.setGeoJSON_zip(activity.getGeoJSON_gzip());
+                repository.saveRoute(route);
+                activity.setGeoJSON_gzip(null);
+                activity.setWeather(garminDownloader.getActivityWeather(ID));
                 repository.saveActivity(activity);
             }
-            byte[] decompressed = Compressor.decompress(activity.getGeoJSON_gzip());
             return ActivityMapper.MAPPER.toDTO(activity);
         }
         // need to update the list of activities and download the new ones
@@ -112,18 +130,30 @@ public class ActivityService {
             // if ID is still missing => return null
             return null;
         }
-        Activity activity = repository.getActivityById(UUID, new CompositeKey("ACTIVITY", ID.toString()));
+        Activity activity = repository.getActivity(UUID, new CompositeKey("ACTIVITY", ID.toString()));
         return ActivityMapper.MAPPER.toDTO(activity);
     }
 
-    public void putActivity(Activity activity) {
-    }
 
     public void deleteActivity(@NotNull @Positive Long ID) {
-        String UUID = ((User) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
+        String UUID = getUuid();
         ActivitiesMetatdata activitiesMetatdata = getActivitiesMetatdata();
         activitiesMetatdata.removeActivity(ID);
         repository.saveActivitiesMetadata(activitiesMetatdata);
         repository.deleteActivity(UUID, new CompositeKey("ACTIVITY", ID.toString()));
+    }
+
+    public RouteDTO getRoute(@NotNull @Positive Long ID) {
+        String UUID = getUuid();
+        Route route = repository.getRoute(UUID, new CompositeKey("ROUTE", Long.toString(ID)));
+        if (route == null) {
+            byte[] json = garminDownloader.getActivityRoute(ID);
+            route = Route.builder()
+                    .activityID(ID)
+                    .geoJSON_zip(json)
+                    .build();
+            repository.saveRoute(route);
+        }
+        return RouteMapper.MAPPER.toDTO(route);
     }
 }

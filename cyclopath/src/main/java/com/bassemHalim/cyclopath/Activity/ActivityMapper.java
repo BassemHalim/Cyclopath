@@ -14,6 +14,7 @@ public interface ActivityMapper {
 
     ActivityMapper MAPPER = Mappers.getMapper(ActivityMapper.class);
 
+    @Mapping(source = "weather", target = "weather")
     ActivityDTO toDTO(Activity activity);
 
     ActivityDTO toDTO(ActivityListItemDTO activityListItemDTOctivityListItem);

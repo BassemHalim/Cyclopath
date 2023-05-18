@@ -6,12 +6,14 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 // source: https://dynobase.dev/dynamodb-java-with-dynamodbmapper/
 @Configuration
+@Log
 public class DynamoDBConfig {
     @Value("${amazon.aws.accesskey}")
     private String Access_key;
@@ -23,6 +25,7 @@ public class DynamoDBConfig {
     public DynamoDBMapper dynamoDBMapper() {
         return new DynamoDBMapper(builfAmazonDynamoDB());
     }
+
 
     private AmazonDynamoDB builfAmazonDynamoDB() {
         return AmazonDynamoDBClientBuilder

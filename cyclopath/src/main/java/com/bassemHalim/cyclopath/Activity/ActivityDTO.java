@@ -1,5 +1,6 @@
 package com.bassemHalim.cyclopath.Activity;
 
+import com.bassemHalim.cyclopath.Weather.Weather;
 import lombok.Data;
 
 @Data
@@ -33,5 +34,6 @@ public class ActivityDTO {
     private String startTimeGMT;
     private String startTimeLocal;
     private int timeZoneId;
-    private byte[] geoJSON_gzip;
+    //    private byte[] geoJSON_gzip;
+    private Weather weather;
 }

@@ -5,6 +5,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.*;
 import com.bassemHalim.cyclopath.User.User;
 import com.bassemHalim.cyclopath.Utils.CompositeKey;
 import com.bassemHalim.cyclopath.Utils.CompositeKeyConverter;
+import com.bassemHalim.cyclopath.Weather.Weather;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -80,6 +81,7 @@ public class Activity {
     //    public boolean userPro;
     private double waterEstimated;
     private byte[] geoJSON_gzip;
+    private Weather weather;
 
     @DynamoDBTypeConverted(converter = CompositeKeyConverter.class) // FIXME: 5/12/2023
     @DynamoDBRangeKey(attributeName = "CyclopathSK")
@@ -90,7 +92,7 @@ public class Activity {
         return sortKey;
     }
 
-    @DynamoDBTypeConverted(converter = CompositeKeyConverter.class) // FIXME: 5/12/2023
+    @DynamoDBTypeConverted(converter = CompositeKeyConverter.class)
     public void setSortKey(CompositeKey key) {
         sortKey = key;
     }
