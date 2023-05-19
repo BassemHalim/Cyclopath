@@ -46,10 +46,10 @@ import java.util.List;
 public class GarminDownloader implements ActivityDownloader {
 
     private static final String GARMIN_BASE_URL = "https://connect.garmin.com";
-    private final String garmin_connect_signin_url = GARMIN_BASE_URL + "/signin";
-    private final String garmin_activity_list_url = GARMIN_BASE_URL + "/activitylist-service/activities/search/activities";
-    private final String garmin_activity_download_gpx_url = GARMIN_BASE_URL + "/download-service/export/gpx/activity/";
-    private final String garmin_activity_service_url = GARMIN_BASE_URL + "/activity-service/activity/";
+    private final String GARMIN_SIGNIN_URL = GARMIN_BASE_URL + "/signin";
+    private final String GARMIN_ACTIVITY_LIST_URL = GARMIN_BASE_URL + "/activitylist-service/activities/search/activities";
+    private final String GARMIN_ACTIVITY_GPX_URL = GARMIN_BASE_URL + "/download-service/export/gpx/activity/";
+    private final String GARMIN_ACTIVITY_SERVICE_URL = GARMIN_BASE_URL + "/activity-service/activity/";
     @Value("${Garmin.USERNAME}")
     @NotNull
     @Email
@@ -58,11 +58,9 @@ public class GarminDownloader implements ActivityDownloader {
     @NotNull
     private String Password;
     private String access_token;
-    private String cookie;
     private long access_token_expiry;
     private String state; // browser state: cookies + local storage
     private Page page;
-    private BrowserContext context;
     //    private final Playwright playwright = Playwright.create();
     private final Browser browser;
 
@@ -70,7 +68,7 @@ public class GarminDownloader implements ActivityDownloader {
     public boolean garminLogin() {
         // TODO: 5/16/2023 make faster without being detected as bot
         // Login
-        log.info("starting playwright");
+        log.info("Logging in to Garmin");
         Path statePath = Paths.get("state.json");
 //        browser = playwright.firefox().launch(new BrowserType.LaunchOptions().setSlowMo(0).setHeadless(true));
         BrowserContext context = browser.newContext();
@@ -80,15 +78,13 @@ public class GarminDownloader implements ActivityDownloader {
         }
 
         this.page = context.newPage();
-        page.route("**/*.{png,jpg,jpeg}", route -> {
-            route.abort();
-        });
+        page.route("**/*.{png,jpg,jpeg}", route -> route.abort());
 //        page.route("blob:https://connect.garmin.com/", route -> route.abort());
         // sign in
         // check if saved tokens are valid
         if (!getAccessToken(page.context().storageState())) {
-            log.info("Signing in to garmin connect");
-            Response response = page.navigate(this.garmin_connect_signin_url);
+//            log.info("Signing in to garmin connect");
+            Response response = page.navigate(this.GARMIN_SIGNIN_URL);
 //            page.locator("#email").waitFor();
             page.waitForURL("https://sso.garmin.com/portal/sso/en-US/sign-in?clientId=GarminConnect&service=https://connect.garmin.com/modern");
             // -------------------------------------------------------
@@ -102,7 +98,6 @@ public class GarminDownloader implements ActivityDownloader {
             page.locator("#password").fill(this.Password);
             page.waitForTimeout(Math.random() * 100);
             page.getByTestId("g__button").click();
-            log.info("clicked");
 //        page.locator("#garminLogin-btn-signin").click();
 //            page.locator("#column-0").waitFor(); // wait for page to load @fixme very slow
             Request request = page.waitForRequest("https://connect.garmin.com/info-service/api/**",
@@ -110,10 +105,10 @@ public class GarminDownloader implements ActivityDownloader {
                     });
 
             //-------------------------------------------------------------
-            log.info("Getting garmin access token");
+//            log.info("Getting garmin access token");
             // get access token
             String storageState = page.context().storageState();
-            if (!getAccessToken(storageState)) return false;
+            if (!getAccessToken(storageState)) throw new SecurityException("failed to login to garmin");
 //            this.cookie = request.allHeaders().get("cookie");
 //            this.access_token = request.allHeaders().get("authorization");
             this.state = context.storageState();
@@ -125,11 +120,13 @@ public class GarminDownloader implements ActivityDownloader {
     }
 
     private boolean getAccessToken(String storageState) {
-        log.info("Trying to extract access token");
+        if (storageState == null) return false;
         this.state = storageState;
         Gson gson = new Gson();
         JsonElement stateJson = gson.fromJson(storageState, JsonElement.class);
-        JsonArray localStorageArray = stateJson.getAsJsonObject().getAsJsonArray("origins").get(0)
+        JsonArray origins = stateJson.getAsJsonObject().getAsJsonArray("origins");
+        if (origins.isEmpty()) return false;
+        JsonArray localStorageArray = origins.get(0)
                 .getAsJsonObject()
                 .getAsJsonArray("localStorage");
         JsonElement token = null;
@@ -143,22 +140,6 @@ public class GarminDownloader implements ActivityDownloader {
             }
         }
 
-//        Pattern pattern = Pattern.compile("access_token"); // str" \"access_token\":\""
-//        Pattern pattern = Pattern.compile("access_token.{5}[a-zA-z0-9.-]*\"");
-//        Matcher matcher = pattern.matcher(storageState);
-//        if (!matcher.find()) return false;
-//
-//        this.access_token = storageState.substring(matcher.start() + 17, matcher.end() - 2);
-////        this.access_token = storageState.substring(matcher.end() + 5, matcher.end() + 1137);
-////        System.out.println(this.access_token);
-////        return false;
-//        pattern = Pattern.compile(
-//                "refresh_token_expires_in\\\\\\\"\\:[0-9]{4},\\\\\\\"expires\\\\\\\"\\:"
-//        ); // str" "refresh_token_expires_in\":7199,\"expires\":1682571122104
-//        matcher = pattern.matcher(storageState);
-//        if (!matcher.find()) return false;
-//        this.access_token_expiry = Long.parseLong(
-//                storageState.substring(matcher.end(), matcher.end() + 13));
         return tokenValid(); // verify token is still valid
     }
 
@@ -175,7 +156,7 @@ public class GarminDownloader implements ActivityDownloader {
         List<ActivityListItemDTO> activityList = new ArrayList<>();
         // get activity list
         BrowserContext context = browser.newContext(new Browser.NewContextOptions().setStorageState(state));
-        APIResponse response = context.request().get(this.garmin_activity_list_url, RequestOptions.create()
+        APIResponse response = context.request().get(this.GARMIN_ACTIVITY_LIST_URL, RequestOptions.create()
                 .setQueryParam("limit", limit)
                 .setQueryParam("start", start)
                 .setHeader("authorization", "Bearer " + this.access_token)
@@ -215,7 +196,7 @@ public class GarminDownloader implements ActivityDownloader {
         log.info("downloading Activity: " + ID);
         BrowserContext context = browser.newContext(new Browser.NewContextOptions()
 //                .setStorageState(state)
-                        .setBaseURL(this.garmin_activity_service_url)
+                        .setBaseURL(this.GARMIN_ACTIVITY_SERVICE_URL)
         );
         APIResponse response = context.request().get(ID.toString(), RequestOptions.create()
                 .setHeader("authorization", "Bearer " + this.access_token)
@@ -253,7 +234,7 @@ public class GarminDownloader implements ActivityDownloader {
         log.info("downloading GPX file for Activity: " + id);
         BrowserContext context = browser.newContext(new Browser.NewContextOptions()
                 .setStorageState(state)
-                .setBaseURL(this.garmin_activity_download_gpx_url)
+                .setBaseURL(this.GARMIN_ACTIVITY_GPX_URL)
         );
         APIResponse response = context.request().get(id.toString(), RequestOptions.create()
                 .setHeader("authorization", "Bearer " + this.access_token)
@@ -295,7 +276,7 @@ public class GarminDownloader implements ActivityDownloader {
         log.info("downloading Weather for Activity: " + id);
         BrowserContext context = browser.newContext(new Browser.NewContextOptions()
                 .setStorageState(state)
-                .setBaseURL(this.garmin_activity_service_url)
+                .setBaseURL(this.GARMIN_ACTIVITY_SERVICE_URL)
         );
         APIResponse response = context.request().get(id.toString() + "/weather", RequestOptions.create()
                 .setHeader("authorization", "Bearer " + this.access_token)

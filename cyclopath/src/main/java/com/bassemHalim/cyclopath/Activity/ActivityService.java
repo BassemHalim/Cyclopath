@@ -1,6 +1,7 @@
 package com.bassemHalim.cyclopath.Activity;
 
 
+import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 import com.bassemHalim.cyclopath.Activity.ActivityDownloader.ActivityDownloader;
 import com.bassemHalim.cyclopath.Activity.ActivityDownloader.GarminActivityListItemDTO.ActivityListItemDTO;
 import com.bassemHalim.cyclopath.Map.Route;
@@ -128,9 +129,10 @@ public class ActivityService {
         activitiesMetatdata = getActivitiesMetatdata();
         if (!activitiesMetatdata.getSavedActivities().contains(ID)) {
             // if ID is still missing => return null
-            return null;
+            throw new ResourceNotFoundException("activity not found");
         }
         Activity activity = repository.getActivity(UUID, new CompositeKey("ACTIVITY", ID.toString()));
+
         return ActivityMapper.MAPPER.toDTO(activity);
     }
 
