@@ -21,32 +21,6 @@ const loginURL = "http://192.168.1.245:8080/auth/authenticate";
 
 export const storeToken = (value: string) => {
   AsyncStorage.setItem("access_token", value).catch((e) => console.error(e));
-
-  // try {
-  //   await AsyncStorage.setItem("access_token", value);
-  // } catch (e) {
-  //   console.error(e);
-  // }
-};
-
-export const  getToken = (): string | null => {
-  AsyncStorage.getItem("access_token")
-    .then((response) => {
-      console.log(response)
-      return response;
-    })
-    .catch((e) => console.error(e));
-
-  // try {
-  // const value: string | null = await AsyncStorage.getItem("access_token").then().catch(e => console.error(e));
-  //   if (value !== null) {
-  //     return value;
-  //   }
-  // } catch (e) {
-  //   console.error(e);
-  // }
-  // return null;
-  return null;
 };
 
 export default function SignIn({ navigation }: Props) {
