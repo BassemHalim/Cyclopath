@@ -1,4 +1,7 @@
-export interface Activity {
+import { Image, Text, View } from "react-native";
+import { styles } from "../Style";
+
+export interface ActivityDTO {
   activityId: number;
   activityName: string;
   averageHR: number;
@@ -30,11 +33,37 @@ export interface Activity {
 }
 
 export class Convert {
-  public static toActivity(json: string): Activity[] {
+  public static toActivity(json: string): ActivityDTO[] {
     return JSON.parse(json);
   }
 
-  public static activityToJson(value: Activity[]): string {
+  public static activityToJson(value: ActivityDTO[]): string {
     return JSON.stringify(value);
   }
+}
+
+export default function Activity(props: { DTO: ActivityDTO; key: number }) {
+  let DTO = props.DTO;
+  const distanceInMiles: number = DTO.distance / 1609;
+  const durationInHours: number = DTO.duration / 3600;
+  const elevationGaininft: number = DTO.elevationGain;
+  return (
+    <View style={styles.activityStats}>
+      <View style={styles.activityStatsRow}>
+        <Text style={styles.text}>{DTO.activityName}</Text>
+        <Text style={styles.text}>Distance: {distanceInMiles.toFixed(2)}</Text>
+      </View>
+      <View style={styles.activityStatsRow}>
+        <Text style={styles.text}>Duration: {durationInHours.toFixed(2)}</Text>
+        <Text style={styles.text}>
+          Elevation Gain: {elevationGaininft.toFixed(2)}
+        </Text>
+      </View>
+      <Image
+        source={require("../../assets/logo.png")}
+        resizeMode="contain"
+        style={styles.activityMap}
+      />
+    </View>
+  );
 }

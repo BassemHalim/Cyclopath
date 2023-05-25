@@ -11,16 +11,15 @@ import { useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React from "react";
 import { styles } from "../Style";
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Props } from "../types";
 
 const loginURL = "http://192.168.1.245:8080/auth/authenticate";
 
 export const storeToken = (value: string) => {
-  AsyncStorage.setItem("access_token", value).catch((e) => console.error(e));
+  AsyncStorage.setItem("access_token", value)
+    .then(() => console.log("stored token"))
+    .catch((e) => console.error(e));
 };
 
 export default function SignIn({ navigation }: Props) {
@@ -54,7 +53,7 @@ export default function SignIn({ navigation }: Props) {
       .then((data) => {
         const token = data.token;
         storeToken(token);
-        navigation.navigate("Home");
+        navigation.navigate("Home", token);
       })
       .catch((error) => console.log("error", error));
   };

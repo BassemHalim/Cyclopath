@@ -48,6 +48,34 @@ const styles = StyleSheet.create({
     marginTop: 45,
     marginBottom: 30,
   },
+  activityStats: {
+    borderColor: "grey",
+    borderRadius: 10,
+    borderWidth: 5,
+    margin: 3,
+  },
+  activityStatsRow: {
+    display: "flex",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-around",
+    margin: 10,
+  },
+  activityMap: {
+    flex: 1,
+    width: "80%",
+    height: 200,
+    maxHeight: 200,
+    maxWidth: 400,
+    borderRadius: 10,
+    margin: 10,
+    alignSelf: "center",
+  },
+  home: {
+    flex: 1,
+    flexDirection: "column",
+    backgroundColor: "#000",
+  },
 });
 
 export { styles };

@@ -3,12 +3,13 @@ import { Button, Image, StyleSheet, Text, TextInput, View } from "react-native";
 import { Props } from "../types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ScrollView } from "react-native-gesture-handler";
-import { Activity, Convert } from "../components/Activity";
-
+import Activity, { ActivityDTO, Convert } from "../components/Activity";
+import { styles } from "../Style";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 const activityListURL: string =
   "http://192.168.1.245:8080/activity/activity-list?limit=50";
 
-async function getActivityList(token: string): Promise<Activity[] | null> {
+async function getActivityList(token: string): Promise<ActivityDTO[] | null> {
   if (token == "") return null;
   var myHeaders = new Headers();
   myHeaders.append("Authorization", "Bearer " + token);
@@ -22,7 +23,7 @@ async function getActivityList(token: string): Promise<Activity[] | null> {
     const json: string = await fetch(activityListURL, requestOptions).then(
       (response) => response.text()
     );
-    const activityList: Activity[] = Convert.toActivity(json);
+    const activityList: ActivityDTO[] = Convert.toActivity(json);
     return activityList;
     // console.log(json);
     // return JSON.parse(json);
@@ -31,33 +32,45 @@ async function getActivityList(token: string): Promise<Activity[] | null> {
   }
   return null;
 }
-export default function Home() {
-  const [token, setToken] = useState<string>("");
-  const [activitites, setActivities] = useState<Activity[]>([]);
+export default function Home(props: { token: string }) {
+  const insets = useSafeAreaInsets();
+
+  const [token, setToken] = useState<string>(props.token);
+  const [activitites, setActivities] = useState<ActivityDTO[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      let tkn = await AsyncStorage.getItem("access_token");
-      if (tkn) {
-        setToken(tkn);
-        let activityLst: Activity[] | null = await getActivityList(token);
-        if (activityLst) setActivities(activityLst);
-      }
-    };
-    fetchData();
+    // handle infinite loop
+    console.log("effect, token: " + token);
+    if (token != "") {
+      const fetchData = async () => {
+        if (token != "") {
+          let tkn = await AsyncStorage.getItem("access_token");
+          if (tkn) {
+            setToken(tkn);
+          }
+        }
+        if (token) {
+          let activityLst: ActivityDTO[] | null = await getActivityList(token);
+          if (activityLst) setActivities(activityLst);
+        }
+      };
+      fetchData();
+    }
   }, [token]);
 
   return (
-    <ScrollView>
-      <Text> Welcome Home</Text>
+    <ScrollView
+      style={[
+        styles.home,
+        {
+          paddingBottom: Math.max(insets.bottom, 16),
+          paddingTop: Math.max(insets.top, 16),
+        },
+      ]}
+    >
       {activitites.map((item, index) => (
-        <Text key={index}>
-          Name:{item.activityName}
-          Distance: {item.distance}
-          Duration: {item.duration}
-        </Text>
+        <Activity DTO={item} key={index} />
       ))}
     </ScrollView>
   );
 }
-
