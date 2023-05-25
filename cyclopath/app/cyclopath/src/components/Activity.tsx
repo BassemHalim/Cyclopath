@@ -46,11 +46,14 @@ export default function Activity(props: { DTO: ActivityDTO; key: number }) {
   let DTO = props.DTO;
   const distanceInMiles: number = DTO.distance / 1609;
   const durationInHours: number = DTO.duration / 3600;
-  const elevationGaininft: number = DTO.elevationGain;
+  const elevationGaininft: number = DTO.elevationGain * 3.281;
   return (
     <View style={styles.activityStats}>
       <View style={styles.activityStatsRow}>
         <Text style={styles.text}>{DTO.activityName}</Text>
+      </View>
+      <View>
+        <Text style={styles.text}>Calories: {DTO.calories.toFixed(2)}</Text>
         <Text style={styles.text}>Distance: {distanceInMiles.toFixed(2)}</Text>
       </View>
       <View style={styles.activityStatsRow}>

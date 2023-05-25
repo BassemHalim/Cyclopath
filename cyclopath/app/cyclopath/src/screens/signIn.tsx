@@ -7,7 +7,7 @@ import {
   View,
   Alert,
 } from "react-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React from "react";
 import { styles } from "../Style";
@@ -26,6 +26,22 @@ export default function SignIn({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [token, setToken] = useState<string>("");
+
+  useEffect(() => {
+    // handle infinite loop
+    if (!token) {
+      const fetchData = async () => {
+        let tkn = await AsyncStorage.getItem("access_token");
+        if (tkn) setToken(tkn);
+      };
+      fetchData();
+    }
+    if (token !== "") {
+      console.log("got token");
+      navigation.navigate("Home", token);
+    }
+  }, [token]);
 
   const onSignin = () => {
     //@TODO handle signup
@@ -52,6 +68,10 @@ export default function SignIn({ navigation }: Props) {
       .then((response) => response.json())
       .then((data) => {
         const token = data.token;
+        if (!token) {
+          Alert.alert("credentials incorrect");
+          return;
+        }
         storeToken(token);
         navigation.navigate("Home", token);
       })

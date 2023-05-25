@@ -1,5 +1,12 @@
-import { useEffect, useState } from "react";
-import { Button, Image, StyleSheet, Text, TextInput, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Button,
+  Image,
+  Text,
+  TextInput,
+  View,
+  RefreshControl,
+} from "react-native";
 import { Props } from "../types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ScrollView } from "react-native-gesture-handler";
@@ -11,6 +18,7 @@ const activityListURL: string =
 
 async function getActivityList(token: string): Promise<ActivityDTO[] | null> {
   if (token == "") return null;
+  //@TODO handle expired token
   var myHeaders = new Headers();
   myHeaders.append("Authorization", "Bearer " + token);
   var requestOptions = {
@@ -32,34 +40,53 @@ async function getActivityList(token: string): Promise<ActivityDTO[] | null> {
   }
   return null;
 }
+
 export default function Home(props: { token: string }) {
   const insets = useSafeAreaInsets();
+  const [refreshing, setRefreshing] = useState(false);
 
-  const [token, setToken] = useState<string>(props.token);
+  // const [token, setToken] = useState<string>(props.token);
+  let token = props.token;
   const [activitites, setActivities] = useState<ActivityDTO[]>([]);
 
+  const fetchData = async () => {
+    console.log("fetching activities");
+    console.log(token);
+    if (!token) {
+      let tkn: string | null = await AsyncStorage.getItem("access_token");
+      console.log("token! " + tkn);
+      if (tkn) {
+        //   setState({
+        //     loggedIn: val
+        // }, () => console.log(this.state.loggedIn));
+        token = tkn;
+      }
+    }
+    if (token) {
+      let activityLst: ActivityDTO[] | null = await getActivityList(token);
+      console.log("got activities");
+      if (activityLst) {
+        setActivities(activityLst);
+      }
+      setRefreshing(false);
+    }
+  };
   useEffect(() => {
     // handle infinite loop
-    console.log("effect, token: " + token);
+    console.log("effect");
     if (token != "") {
-      const fetchData = async () => {
-        if (token != "") {
-          let tkn = await AsyncStorage.getItem("access_token");
-          if (tkn) {
-            setToken(tkn);
-          }
-        }
-        if (token) {
-          let activityLst: ActivityDTO[] | null = await getActivityList(token);
-          if (activityLst) setActivities(activityLst);
-        }
-      };
       fetchData();
     }
   }, [token]);
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  }, []);
+
   return (
-    <ScrollView
+    <View
       style={[
         styles.home,
         {
@@ -68,9 +95,15 @@ export default function Home(props: { token: string }) {
         },
       ]}
     >
-      {activitites.map((item, index) => (
-        <Activity DTO={item} key={index} />
-      ))}
-    </ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        {activitites.map((item, index) => (
+          <Activity DTO={item} key={index} />
+        ))}
+      </ScrollView>
+    </View>
   );
 }
