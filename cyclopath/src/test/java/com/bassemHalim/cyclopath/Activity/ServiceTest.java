@@ -1,38 +1,80 @@
 package com.bassemHalim.cyclopath.Activity;
 
+import com.bassemHalim.cyclopath.Activity.ActivityDownloader.ActivityDownloader;
 import com.bassemHalim.cyclopath.Repositoy.SingleTableDB;
+import com.bassemHalim.cyclopath.User.User;
+import com.bassemHalim.cyclopath.User.UserService;
+import com.bassemHalim.cyclopath.Utils.CompositeKey;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.security.core.context.SecurityContext;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import java.nio.charset.StandardCharsets;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = {"/applicationContext_mock.xml"})
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+
+@RunWith(MockitoJUnitRunner.class)
 public class ServiceTest {
-    @Autowired
-    private SingleTableDB repository;
+    @Mock
+    SingleTableDB repository;
+    @Mock
+    ActivityDownloader garminDownloader;
+    @Mock
+    SecurityContext securityContext;
+    @InjectMocks
+    ActivityService service;
 
     @Test
-    public void ActivityListMetadata() {
-        ActivitiesMetatdata activitiesMetatdata = new ActivitiesMetatdata();
-        activitiesMetatdata.addActivity(1000L);
-        assertNotNull(activitiesMetatdata.getSavedActivities());
-        assertEquals(activitiesMetatdata.getSavedActivities().size(), 1);
-        assertEquals(activitiesMetatdata.getSavedActivities().get(0), 1000L);
+    public void TestgetActivitiesMetatdata() {
+
     }
 
-//    @Test
-//    public void testSaveActivityMedadata() {
-//        ActivitiesMetatdata activitiesMedatdata = new ActivitiesMetatdata();
-//        activitiesMedatdata.setUUID("9e3f9fbb-49bc-4a10-949b-f00effba9627");
-//        activitiesMedatdata.addActivity(1000L);
-//        activitiesMedatdata.addActivity(2000L);
-//        repository.saveActivityMetadata(activitiesMedatdata);
-//    }
+
+    @Test
+    public void TestgetActivityList() {
+
+    }
+
+    @Test
+    public void TestgetActivity() {
+        long activityId = 123L;
+        Activity activity = new Activity();
+        activity.setActivityId(activityId);
+        activity.setGeoJSON_gzip("test".getBytes(StandardCharsets.UTF_8));
+        activity.setActivityName("test");
+        when(repository.getActivity(anyString(), any(CompositeKey.class))).thenReturn(activity);
+
+        ActivitiesMetatdata metatdata = new ActivitiesMetatdata();
+        metatdata.addActivity(activityId);
+        when(repository.getActivityMetadata(anyString())).thenReturn(metatdata);
+        User johndoe = User.builder().Id("UUID").build();
+        try (MockedStatic<UserService> mockedStatic = Mockito.mockStatic(UserService.class)) {
+            mockedStatic.when(() -> UserService.getCurrentUser()).thenReturn(johndoe);
+        }
+        ActivityDTO activityDTO = service.getActivity(activityId);
+        assert (activityDTO != null);
+        assert (activityDTO.getActivityId() == activityId);
+        assert (activityDTO.getActivityName().equals("test"));
+
+
+    }
+
+    @Test
+    public void TestdeleteActivityList() {
+
+    }
+
+    @Test
+    public void TestgetActivityRoute() {
+
+    }
 
 
 }

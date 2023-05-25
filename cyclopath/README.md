@@ -19,8 +19,8 @@
 ### Users
 
 ```markdown
-/register [POST]
-/signin [POST]
+auth/register [POST]
+auth/signin [POST]
 /signout [POST]
 ```
 

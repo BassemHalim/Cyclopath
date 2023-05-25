@@ -6,6 +6,7 @@ import com.bassemHalim.cyclopath.Repositoy.SingleTableDB;
 import com.bassemHalim.cyclopath.User.Role;
 import com.bassemHalim.cyclopath.User.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.java.Log;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Log
 public class AuthenticationService {
     private final SingleTableDB repository;
     private final PasswordEncoder passwordEncoder;
@@ -55,9 +57,10 @@ public class AuthenticationService {
 //        new Thread(() -> {
 //            downloader.garminLogin();
 //        }).start();
-
+        log.info(user.getId() + " logged in");
         return AuthenticationResponse.builder()
                 .token(jwtToken)
                 .build();
     }
+
 }

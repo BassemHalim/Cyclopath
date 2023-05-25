@@ -1,6 +1,7 @@
 package com.bassemHalim.cyclopath.User;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.*;
+import com.microsoft.playwright.BrowserContext;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -50,6 +51,8 @@ public class User implements UserDetails {
     @DynamoDBAttribute(attributeName = "role")
     private Role role;
 
+    @DynamoDBIgnore
+    private BrowserContext browserContext;
     private boolean isAccountNonExpired;
     private boolean isAccountNonLocked;
     private boolean isCredentialsNonExpired;

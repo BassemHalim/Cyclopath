@@ -181,6 +181,7 @@ public class SingleTableDB {
 
     //----------------ROUTE--------------------------
     public void saveRoute(Route route) {
+        log.info("saving route");
         boolean success = false;
         do {
             try {
@@ -191,6 +192,29 @@ public class SingleTableDB {
                 try {
                     TimeUnit.SECONDS.sleep(5);
                 } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        } while (!success);
+    }
+
+    public void batchSaveRoute(List<Route> routeList) {
+        log.log(new LogRecord(Level.INFO, "saving " + routeList.size() + " routes"));
+
+//        DynamoDBMapperConfig config = DynamoDBMapperConfig.builder()
+//                .withSaveBehavior(DynamoDBMapperConfig.SaveBehavior.CLOBBER).build();
+
+        boolean success = false;
+        do {
+            try {
+                dynamoDBMapper.batchSave(routeList);
+                success = true;
+            } catch (ProvisionedThroughputExceededException e) {
+                System.out.println("exceeded provisioned WCU going to sleep for a bit");
+                try {
+                    TimeUnit.SECONDS.sleep(5);
+                } catch (InterruptedException ie) {
+                    log.severe("sleep interrupted");
                     Thread.currentThread().interrupt();
                 }
             }
