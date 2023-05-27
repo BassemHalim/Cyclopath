@@ -29,14 +29,21 @@ async function getActivityList(token: string): Promise<ActivityDTO[] | null> {
 
   try {
     const json: string = await fetch(activityListURL, requestOptions).then(
-      (response) => response.text()
+      function (response) {
+        if (!response.ok) {
+          throw Error(response.statusText);
+        }
+        return response.text();
+      }
     );
+    // handle error
+
     const activityList: ActivityDTO[] = Convert.toActivity(json);
     return activityList;
     // console.log(json);
     // return JSON.parse(json);
   } catch (e) {
-    console.error("fetch error " + e);
+    console.log("fetch error " + e);
   }
   return null;
 }
@@ -64,8 +71,8 @@ export default function Home(props: { token: string }) {
     }
     if (token) {
       let activityLst: ActivityDTO[] | null = await getActivityList(token);
-      console.log("got activities");
       if (activityLst) {
+        console.log("got activities");
         setActivities(activityLst);
       }
       setRefreshing(false);
@@ -84,7 +91,7 @@ export default function Home(props: { token: string }) {
     await fetchData();
     setRefreshing(false);
   }, []);
-
+  console.log(activitites);
   return (
     <View
       style={[

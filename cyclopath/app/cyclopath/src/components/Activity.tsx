@@ -52,7 +52,7 @@ export default function Activity(props: { DTO: ActivityDTO; key: number }) {
       <View style={styles.activityStatsRow}>
         <Text style={styles.text}>{DTO.activityName}</Text>
       </View>
-      <View>
+      <View style={styles.activityStatsRow}>
         <Text style={styles.text}>Calories: {DTO.calories.toFixed(2)}</Text>
         <Text style={styles.text}>Distance: {distanceInMiles.toFixed(2)}</Text>
       </View>
