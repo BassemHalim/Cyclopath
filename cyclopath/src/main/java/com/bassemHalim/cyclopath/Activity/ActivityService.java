@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 
@@ -84,7 +85,9 @@ public class ActivityService {
 
     public List<ActivityDTO> getActivityList(@NotNull @Positive int start, @NotNull @Positive int limit) {
         List<Activity> activityList = repository.batchGetActivity(limit, UserService.getCurrentUser().getId());
-        List<Activity> toBeSaved = new ArrayList<>();
+        activityList.stream().forEach(s -> System.out.println(s.getActivityId()));
+        List<Activity> toBeSaved = new ArrayList<>(limit);
+        List<Route> routesToBeSave = new LinkedList<>();
         for (Activity activity : activityList) {
             long activityID = activity.getActivityId();
             boolean updated = false;
@@ -98,19 +101,21 @@ public class ActivityService {
                         .activityID(activity.getActivityId())
                         .build();
                 route.setGeoJSON_zip(activity.getGeoJSON_gzip());
-                repository.saveRoute(route); // @TODO change to batch write
+                routesToBeSave.add(route);
                 activity.setGeoJSON_gzip(null);
                 updated = true;
             }
 
             if (updated) {
-                System.out.println(activity.getActivityId());
                 toBeSaved.add(activity);
             }
         }
         repository.batchSaveActivities(toBeSaved);
+        repository.batchSaveRoute(routesToBeSave);
         return ActivityMapper.MAPPER.ActivitytoDTOList(activityList);
-//        return syncActivities(start, limit);
+//        List<ActivityDTO> activityDTOS = syncActivities(start, limit);
+//        activityDTOS.stream().forEach(s -> System.out.println(s.getActivityId()));
+//        return activityDTOS;
     }
 
     /**
@@ -126,7 +131,7 @@ public class ActivityService {
         ActivitiesMetatdata activitiesMetatdata = getActivitiesMetatdata();
         if (activitiesMetatdata.getSavedActivities().contains(ID)) {
             // it's in the DB
-            Activity activity = repository.getActivity(UUID, new CompositeKey("ACTIVITY", ID.toString()));
+            Activity activity = repository.getActivity(UUID, new CompositeKey("ACTIVITY", Activity.getCompositeKeyPostfix(ID))); //@TODO handle migration
             if (activity.getGeoJSON_gzip() != null) {
                 // @TODO change later
                 Route route = Route.builder()
@@ -175,5 +180,10 @@ public class ActivityService {
             repository.saveRoute(route);
         }
         return RouteMapper.MAPPER.toDTO(route);
+    }
+
+    public void updateSortKeys() {
+//        repository.updateActivityCompositeKeys(UserService.getCurrentUser().getId());
+        repository.updateRouteCompositeKeys(UserService.getCurrentUser().getId());
     }
 }

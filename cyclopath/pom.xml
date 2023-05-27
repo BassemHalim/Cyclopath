@@ -35,6 +35,14 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+    <distributionManagement>
+        <repository>
+            <id>mapbox</id>
+            <name>Mapbox</name>
+            <url>https://api.mapbox.com/downloads/v2/releases/maven</url>
+        </repository>
+    </distributionManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -116,6 +124,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
+
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -137,22 +146,22 @@
             <artifactId>aws-java-sdk-dynamodb</artifactId>
             <version>1.12.459</version>
         </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>RELEASE</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.data</groupId>
-            <artifactId>spring-data-commons</artifactId>
-            <version>2.3.5.RELEASE</version>
-        </dependency>
+        <!--        <dependency>-->
+        <!--            <groupId>junit</groupId>-->
+        <!--            <artifactId>junit</artifactId>-->
+        <!--            <scope>test</scope>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.testng</groupId>-->
+        <!--            <artifactId>testng</artifactId>-->
+        <!--            <version>RELEASE</version>-->
+        <!--            <scope>test</scope>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.springframework.data</groupId>-->
+        <!--            <artifactId>spring-data-commons</artifactId>-->
+        <!--            <version>2.3.5.RELEASE</version>-->
+        <!--        </dependency>-->
         <dependency>
             <groupId>io.github.boostchicken</groupId>
             <artifactId>spring-data-dynamodb</artifactId>
@@ -170,10 +179,25 @@
             <version>5.2.0</version>
             <scope>test</scope>
         </dependency>
-
+        <!--        <dependency>-->
+        <!--            <groupId>com.mapbox.mapboxsdk</groupId>-->
+        <!--            <artifactId>mapbox-sdk-geojson</artifactId>-->
+        <!--            <version>6.11.1</version>-->
+        <!--        </dependency>-->
 
     </dependencies>
-
+    <repositories>
+        <repository>
+            <id>mapbox</id>
+            <name>Mapbox</name>
+            <url>
+                https://api.mapbox.com/downloads/v2/releases/maven/com/mapbox/mapboxsdk/mapbox-sdk-geojson/6.11.0/mapbox-sdk-geojson-6.11.0.jar
+            </url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
     <build>
         <plugins>
             <plugin>
@@ -208,6 +232,13 @@
                 </configuration>
             </plugin>
         </plugins>
+        <!--        <extensions>-->
+        <!--            <extension>-->
+        <!--                <groupId>com.mapbox.mapboxsdk</groupId>-->
+        <!--                <artifactId>mapbox-sdk-geojson</artifactId>-->
+        <!--                <version>6.11.1</version>-->
+        <!--            </extension>-->
+        <!--        </extensions>-->
     </build>
 
 </project>

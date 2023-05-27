@@ -40,4 +40,9 @@ public class ActivityController {
         return ResponseEntity.ok(activityService.getRoute(id));
     }
 
+    @GetMapping("migrate")
+    ResponseEntity<String> migrate() {
+        activityService.updateSortKeys();
+        return ResponseEntity.ok("done");
+    }
 }

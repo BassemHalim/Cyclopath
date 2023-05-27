@@ -4,6 +4,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTypeConverted;
+import com.bassemHalim.cyclopath.Activity.Activity;
 import com.bassemHalim.cyclopath.User.User;
 import com.bassemHalim.cyclopath.Utils.CompositeKey;
 import com.bassemHalim.cyclopath.Utils.CompositeKeyConverter;
@@ -35,8 +36,8 @@ public class Route {
     @DynamoDBTypeConverted(converter = CompositeKeyConverter.class)
     @DynamoDBRangeKey(attributeName = "CyclopathSK")
     public CompositeKey getCyclopathSK() {
-        if (CyclopathSK == null) {
-            CyclopathSK = new CompositeKey("ROUTE", String.valueOf(activityID));
+        if (CyclopathSK == null || CyclopathSK.getPostfix().startsWith("8") || CyclopathSK.getPostfix().startsWith("9")) { //@FIXME remove
+            CyclopathSK = new CompositeKey("ROUTE", Activity.getCompositeKeyPostfix(activityID));
         }
         return CyclopathSK;
     }

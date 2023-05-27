@@ -86,8 +86,9 @@ public class Activity {
     @DynamoDBTypeConverted(converter = CompositeKeyConverter.class) // FIXME: 5/12/2023
     @DynamoDBRangeKey(attributeName = "CyclopathSK")
     public CompositeKey getSortKey() {
-        if (sortKey == null) {
-            sortKey = new CompositeKey(SK, String.valueOf(activityId));
+        if (sortKey == null || sortKey.getPostfix().startsWith("8") || sortKey.getPostfix().startsWith("9")) { // @FIXME remove
+
+            sortKey = new CompositeKey(SK, getCompositeKeyPostfix(activityId));
         }
         return sortKey;
     }
@@ -108,6 +109,12 @@ public class Activity {
     @DynamoDBIgnore
     public String getSK() {
         return this.SK;
+    }
+
+    public static String getCompositeKeyPostfix(long id) {
+        String activityID = String.valueOf(id);
+        int numZeros = 11 - activityID.length();
+        return "0" .repeat(numZeros) + activityID;
     }
 }
 

@@ -57,7 +57,7 @@ public class AuthenticationService {
 //        new Thread(() -> {
 //            downloader.garminLogin();
 //        }).start();
-        log.info(user.getId() + " logged in");
+        log.warning(user.getId() + " logged in");
         return AuthenticationResponse.builder()
                 .token(jwtToken)
                 .build();

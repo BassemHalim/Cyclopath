@@ -92,8 +92,8 @@ public class SingleTableDB {
     }
 
     public void batchSaveActivities(List<Activity> activityList) {
+        if (activityList.size() == 0) return;
         log.log(new LogRecord(Level.INFO, "saving " + activityList.size() + " activities"));
-
 //        DynamoDBMapperConfig config = DynamoDBMapperConfig.builder()
 //                .withSaveBehavior(DynamoDBMapperConfig.SaveBehavior.CLOBBER).build();
 
@@ -114,6 +114,33 @@ public class SingleTableDB {
         } while (!success);
     }
 
+    public void batchDeleteActivities(List<Activity> objectsToDelete) {
+//        log.log(new LogRecord(Level.INFO, "saving " + objectsToSave.size() + " activities"));
+        log.log(new LogRecord(Level.INFO, "deleting " + objectsToDelete.size() + " activities"));
+
+//        DynamoDBMapperConfig config = DynamoDBMapperConfig.builder()
+//                .withSaveBehavior(DynamoDBMapperConfig.SaveBehavior.CLOBBER).build();
+
+        boolean success = false;
+        do {
+            try {
+                List<DynamoDBMapper.FailedBatch> failedBatch = dynamoDBMapper.batchDelete(objectsToDelete);
+                failedBatch.forEach(o -> log.info(o.getException().getMessage()));
+                success = true;
+            } catch (ProvisionedThroughputExceededException e) {
+                System.out.println("exceeded provisioned WCU going to sleep for a bit");
+                try {
+                    TimeUnit.SECONDS.sleep(5);
+                } catch (InterruptedException ie) {
+                    log.severe("sleep interrupted");
+                    Thread.currentThread().interrupt();
+                }
+            } catch (Exception e) {
+                log.warning(e.getMessage());
+            }
+        } while (!success);
+    }
+
     /**
      * get at most the num_activities most recent activities of the user with UUID
      *
@@ -121,15 +148,13 @@ public class SingleTableDB {
      * @return a list of the most recent <num_activities> activities
      */
     public List<Activity> batchGetActivity(@Positive int num_activities, String UUID) {
-//        Activity activity = new Activity();
-//        activity.setOwnerUUID(UUID);
         Map<String, AttributeValue> attributeValueMap = new HashMap<>();
         attributeValueMap.put(":uuid", new AttributeValue().withS(UUID));
         attributeValueMap.put(":activity", new AttributeValue().withS("ACTIVITY#"));
         DynamoDBQueryExpression<Activity> queryExpression =
                 new DynamoDBQueryExpression<Activity>()
                         .withLimit(num_activities)
-                        .withScanIndexForward(true)
+                        .withScanIndexForward(false)
                         .withKeyConditionExpression("CyclopathPK = :uuid AND begins_with(CyclopathSK, :activity)")
                         .withExpressionAttributeValues(attributeValueMap);
 
@@ -137,6 +162,7 @@ public class SingleTableDB {
         List<Activity> activityList = queryPage.getResults();
         return activityList;
     }
+
 
     public Activity getActivity(String PK, CompositeKey SK) {
         return dynamoDBMapper.load(Activity.class, PK, SK);
@@ -221,8 +247,60 @@ public class SingleTableDB {
         } while (!success);
     }
 
+    public void batchSaveAndDeleteRoute(List<Route> routesToSave, List<Route> routesToDelete) {
+        log.log(new LogRecord(Level.INFO, "saving " + routesToSave.size() + " routes"));
+        log.log(new LogRecord(Level.INFO, "deleting " + routesToDelete.size() + " routes"));
+
+//        DynamoDBMapperConfig config = DynamoDBMapperConfig.builder()
+//                .withSaveBehavior(DynamoDBMapperConfig.SaveBehavior.CLOBBER).build();
+
+        boolean success = false;
+        do {
+            try {
+                dynamoDBMapper.batchSave(routesToSave, routesToDelete);
+                success = true;
+            } catch (ProvisionedThroughputExceededException e) {
+                System.out.println("exceeded provisioned WCU going to sleep for a bit");
+                try {
+                    TimeUnit.SECONDS.sleep(5);
+                } catch (InterruptedException ie) {
+                    log.severe("sleep interrupted");
+                    Thread.currentThread().interrupt();
+                }
+            }
+        } while (!success);
+    }
+
     public Route getRoute(String PK, CompositeKey SK) {
 
         return dynamoDBMapper.load(Route.class, PK, SK);
+    }
+
+    /**
+     * used to update all activities CK to left pad with 0 ex: ACTIVITY#8154485949 to ACTIVITY#08154485949
+     *
+     * @return
+     */
+    public void updateRouteCompositeKeys(String UUID) {
+        Map<String, AttributeValue> attributeValueMap = new HashMap<>();
+        attributeValueMap.put(":uuid", new AttributeValue().withS(UUID));
+        attributeValueMap.put(":route", new AttributeValue().withS("ROUTE#8"));
+        DynamoDBQueryExpression<Route> queryExpression =
+                new DynamoDBQueryExpression<Route>()
+                        .withLimit(50)
+                        .withScanIndexForward(true)
+                        .withKeyConditionExpression("CyclopathPK = :uuid AND begins_with(CyclopathSK, :route)")
+                        .withExpressionAttributeValues(attributeValueMap);
+        try {
+            QueryResultPage<Route> queryPage = dynamoDBMapper.queryPage(Route.class, queryExpression, DynamoDBMapperConfig.builder().build());
+            List<Route> routeList = queryPage.getResults();
+            routeList.stream().forEach(s -> System.out.println(s.getActivityID()));
+//            batchDeleteActivities(activityList);
+            batchSaveRoute(routeList);
+            // delete later
+        } catch (Exception e) {
+            log.warning(e.getMessage());
+        }
+
     }
 }
