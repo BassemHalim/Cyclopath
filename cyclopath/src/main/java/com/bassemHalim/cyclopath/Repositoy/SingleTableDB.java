@@ -115,11 +115,7 @@ public class SingleTableDB {
     }
 
     public void batchDeleteActivities(List<Activity> objectsToDelete) {
-//        log.log(new LogRecord(Level.INFO, "saving " + objectsToSave.size() + " activities"));
         log.log(new LogRecord(Level.INFO, "deleting " + objectsToDelete.size() + " activities"));
-
-//        DynamoDBMapperConfig config = DynamoDBMapperConfig.builder()
-//                .withSaveBehavior(DynamoDBMapperConfig.SaveBehavior.CLOBBER).build();
 
         boolean success = false;
         do {
@@ -225,6 +221,7 @@ public class SingleTableDB {
     }
 
     public void batchSaveRoute(List<Route> routeList) {
+        if (routeList.size() == 0) return;
         log.log(new LogRecord(Level.INFO, "saving " + routeList.size() + " routes"));
 
 //        DynamoDBMapperConfig config = DynamoDBMapperConfig.builder()

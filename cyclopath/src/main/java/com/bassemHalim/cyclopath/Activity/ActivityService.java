@@ -5,8 +5,6 @@ import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 import com.bassemHalim.cyclopath.Activity.ActivityDownloader.ActivityDownloader;
 import com.bassemHalim.cyclopath.Activity.ActivityDownloader.GarminActivityListItemDTO.ActivityListItemDTO;
 import com.bassemHalim.cyclopath.Map.Route;
-import com.bassemHalim.cyclopath.Map.RouteDTO;
-import com.bassemHalim.cyclopath.Map.RouteMapper;
 import com.bassemHalim.cyclopath.Repositoy.SingleTableDB;
 import com.bassemHalim.cyclopath.User.UserService;
 import com.bassemHalim.cyclopath.Utils.CompositeKey;
@@ -71,7 +69,7 @@ public class ActivityService {
         return ActivityMapper.MAPPER.ActivityListItemDTOtoDTOList(garminActivityList);
     }
 
-    private ActivitiesMetatdata getActivitiesMetatdata() {
+    public ActivitiesMetatdata getActivitiesMetatdata() {
         String UUID = UserService.getCurrentUser().getId();
         ActivitiesMetatdata savedActivities = repository.getActivityMetadata(UUID);
         if (savedActivities == null) {
@@ -85,7 +83,6 @@ public class ActivityService {
 
     public List<ActivityDTO> getActivityList(@NotNull @Positive int start, @NotNull @Positive int limit) {
         List<Activity> activityList = repository.batchGetActivity(limit, UserService.getCurrentUser().getId());
-        activityList.stream().forEach(s -> System.out.println(s.getActivityId()));
         List<Activity> toBeSaved = new ArrayList<>(limit);
         List<Route> routesToBeSave = new LinkedList<>();
         for (Activity activity : activityList) {
@@ -168,19 +165,6 @@ public class ActivityService {
         repository.deleteActivity(UUID, new CompositeKey("ACTIVITY", ID.toString()));
     }
 
-    public RouteDTO getRoute(@NotNull @Positive Long ID) {
-        String UUID = UserService.getCurrentUser().getId();
-        Route route = repository.getRoute(UUID, new CompositeKey("ROUTE", Long.toString(ID)));
-        if (route == null) {
-            byte[] json = garminDownloader.getActivityRoute(ID);
-            route = Route.builder()
-                    .activityID(ID)
-                    .geoJSON_zip(json)
-                    .build();
-            repository.saveRoute(route);
-        }
-        return RouteMapper.MAPPER.toDTO(route);
-    }
 
     public void updateSortKeys() {
 //        repository.updateActivityCompositeKeys(UserService.getCurrentUser().getId());

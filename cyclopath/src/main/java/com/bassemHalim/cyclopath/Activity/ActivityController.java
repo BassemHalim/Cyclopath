@@ -1,6 +1,5 @@
 package com.bassemHalim.cyclopath.Activity;
 
-import com.bassemHalim.cyclopath.Map.RouteDTO;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -35,10 +34,6 @@ public class ActivityController {
         return ResponseEntity.ok("activity deleted");
     }
 
-    @GetMapping("{id}/route")
-    ResponseEntity<RouteDTO> getRoute(@PathVariable Long id) {
-        return ResponseEntity.ok(activityService.getRoute(id));
-    }
 
     @GetMapping("migrate")
     ResponseEntity<String> migrate() {
