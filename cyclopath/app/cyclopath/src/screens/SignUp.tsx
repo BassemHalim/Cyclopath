@@ -1,7 +1,7 @@
 import { Button, Image, StyleSheet, Text, TextInput, View } from "react-native";
 import { styles } from "../Style";
 import { Props } from "../types";
-
+import RegularText from "../components/CustomText";
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
@@ -28,19 +28,19 @@ export default function SignUp({ navigation }: Props) {
       ]}
     >
       <View style={styles.loginForm}>
-        <Text style={styles.text}> username</Text>
+        <RegularText> username</RegularText>
         <TextInput
           inputMode="email"
           style={styles.inputBox}
           placeholder="  name@email.com"
         ></TextInput>
-        <Text style={styles.text}> password</Text>
+        <RegularText> password</RegularText>
         <TextInput
           secureTextEntry={true}
           style={styles.inputBox}
           placeholder="  **********"
         ></TextInput>
-        <Text style={styles.text}> re-enter password</Text>
+        <RegularText> re-enter password</RegularText>
 
         <TextInput
           secureTextEntry={true}
@@ -52,4 +52,3 @@ export default function SignUp({ navigation }: Props) {
     </View>
   );
 }
-

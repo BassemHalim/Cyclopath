@@ -13,6 +13,7 @@ import React from "react";
 import { styles } from "../Style";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Props } from "../types";
+import RegularText from "../components/CustomText";
 
 const loginURL = "http://192.168.1.245:8080/auth/authenticate";
 
@@ -89,19 +90,19 @@ export default function SignIn({ navigation }: Props) {
       ]}
     >
       <Image
-        source={require("../../assets/logo.png")}
+        source={require("../../assets/media/logo.png")}
         resizeMode="contain"
         style={styles.logo}
       ></Image>
       <View style={styles.loginForm}>
-        <Text style={styles.text}> username</Text>
+        <RegularText> username</RegularText>
         <TextInput
           inputMode="email"
           style={styles.inputBox}
           placeholder="  name@email.com"
           onChangeText={(email) => setEmail(email)}
         ></TextInput>
-        <Text style={styles.text}> password</Text>
+        <RegularText> password</RegularText>
         <TextInput
           secureTextEntry={true}
           style={styles.inputBox}

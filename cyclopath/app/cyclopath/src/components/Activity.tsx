@@ -1,5 +1,8 @@
-import { Image, Text, View } from "react-native";
+import { ActivityIndicator, Image, Text, View } from "react-native";
 import { styles } from "../Style";
+import RegularText from "./CustomText";
+import { Suspense, useState, useEffect } from "react";
+import { log } from "react-native-reanimated";
 
 export interface ActivityDTO {
   activityId: number;
@@ -41,32 +44,82 @@ export class Convert {
     return JSON.stringify(value);
   }
 }
+const formatDate = (date: Date): string => {
+  const yyyy = date.getFullYear();
+  let mm = date.getMonth() + 1; // Months start at 0!
+  let dd = date.getDate();
+
+  const formattedToday = dd + "/" + mm + "/" + yyyy;
+  return formattedToday;
+};
 
 export default function Activity(props: { DTO: ActivityDTO; key: number }) {
+  const [imageurl, setImageurl] = useState("../../assets/media/samplemap.png");
+
   let DTO = props.DTO;
   const distanceInMiles: number = DTO.distance / 1609;
   const durationInHours: number = DTO.duration / 3600;
   const elevationGaininft: number = DTO.elevationGain * 3.281;
+  const date = new Date(DTO.startTimeLocal);
+  const mapurl: string = `http://192.168.1.245:8080/activity/${DTO.activityId}/map`;
+
+  // useEffect(() => {
+  //   const fetchImageWithRedirect = async () => {
+  //     if (!props.token) {
+  //       return;
+  //     }
+  //     try {
+  //       var myHeaders = new Headers();
+  //       myHeaders.append("Authorization", "Bearer " + props.token);
+  //       var requestOptions = {
+  //         method: "GET",
+  //         headers: myHeaders,
+  //         redirect: "follow",
+  //       };
+  //       const response = await fetch(mapurl, requestOptions);
+
+  //       if (!response.ok) {
+  //         throw new Error(`HTTP error! Status: ${response.status}`);
+  //       }
+
+  //       const imageBlob = await response.blob();
+  //       let url: string = URL.createObjectURL(imageBlob);
+  //       setImageurl(url);
+  //     } catch (error) {
+  //       console.error("Error fetching image:", error);
+  //     }
+  //   };
+  //   fetchImageWithRedirect();
+  // }, [imageurl]);
+  // console.log(mapurl);
+
   return (
     <View style={styles.activityStats}>
-      <View style={styles.activityStatsRow}>
-        <Text style={styles.text}>{DTO.activityName}</Text>
+      <View style={{ flex: 1 }}>
+        <View style={styles.activityStatsRow}>
+          <RegularText>{DTO.activityName}</RegularText>
+          <RegularText> {formatDate(date)} </RegularText>
+        </View>
+        <View style={styles.activityStatsRow}>
+          <RegularText>Calories: {DTO.calories.toFixed(2)}</RegularText>
+          <RegularText>Distance: {distanceInMiles.toFixed(2)}</RegularText>
+        </View>
+        <View style={styles.activityStatsRow}>
+          <RegularText>Duration: {durationInHours.toFixed(2)}</RegularText>
+          <RegularText>
+            Elevation Gain: {elevationGaininft.toFixed(2)}
+          </RegularText>
+        </View>
       </View>
-      <View style={styles.activityStatsRow}>
-        <Text style={styles.text}>Calories: {DTO.calories.toFixed(2)}</Text>
-        <Text style={styles.text}>Distance: {distanceInMiles.toFixed(2)}</Text>
-      </View>
-      <View style={styles.activityStatsRow}>
-        <Text style={styles.text}>Duration: {durationInHours.toFixed(2)}</Text>
-        <Text style={styles.text}>
-          Elevation Gain: {elevationGaininft.toFixed(2)}
-        </Text>
-      </View>
-      <Image
-        source={require("../../assets/logo.png")}
-        resizeMode="contain"
-        style={styles.activityMap}
-      />
+      <Suspense fallback={<ActivityIndicator />}>
+        <View style={{ flex: 2 }}>
+          <Image
+            source={require("../../assets/media/samplemap.png")}
+            // resizeMode="center"
+            style={styles.activityMap}
+          />
+        </View>
+      </Suspense>
     </View>
   );
 }

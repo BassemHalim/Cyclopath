@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Button,
   Image,
   Text,
   TextInput,
   View,
   RefreshControl,
+  StatusBar,
 } from "react-native";
 import { Props } from "../types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -13,8 +15,9 @@ import { ScrollView } from "react-native-gesture-handler";
 import Activity, { ActivityDTO, Convert } from "../components/Activity";
 import { styles } from "../Style";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import RegularText from "../components/CustomText";
 const activityListURL: string =
-  "http://192.168.1.245:8080/activity/activity-list?limit=50";
+  "http://192.168.1.245:8080/activity/activity-list?limit=5";
 
 async function getActivityList(token: string): Promise<ActivityDTO[] | null> {
   if (token == "") return null;
@@ -48,7 +51,7 @@ async function getActivityList(token: string): Promise<ActivityDTO[] | null> {
   return null;
 }
 
-export default function Home(props: { token: string }) {
+const Home: React.FC<Props> = (props) => {
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -57,22 +60,15 @@ export default function Home(props: { token: string }) {
   const [activitites, setActivities] = useState<ActivityDTO[]>([]);
 
   const fetchData = async () => {
-    console.log("fetching activities");
-    console.log(token);
     if (!token) {
       let tkn: string | null = await AsyncStorage.getItem("access_token");
-      console.log("token! " + tkn);
       if (tkn) {
-        //   setState({
-        //     loggedIn: val
-        // }, () => console.log(this.state.loggedIn));
         token = tkn;
       }
     }
     if (token) {
       let activityLst: ActivityDTO[] | null = await getActivityList(token);
       if (activityLst) {
-        console.log("got activities");
         setActivities(activityLst);
       }
       setRefreshing(false);
@@ -80,7 +76,6 @@ export default function Home(props: { token: string }) {
   };
   useEffect(() => {
     // handle infinite loop
-    console.log("effect");
     if (token != "") {
       fetchData();
     }
@@ -91,7 +86,6 @@ export default function Home(props: { token: string }) {
     await fetchData();
     setRefreshing(false);
   }, []);
-  console.log(activitites);
   return (
     <View
       style={[
@@ -102,15 +96,17 @@ export default function Home(props: { token: string }) {
         },
       ]}
     >
+      <StatusBar translucent={true} />
       <ScrollView
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
         {activitites.map((item, index) => (
-          <Activity DTO={item} key={index} />
+          <Activity DTO={item} key={index}  />
         ))}
       </ScrollView>
     </View>
   );
-}
+};
+export default Home;

@@ -15,9 +15,10 @@ const styles = StyleSheet.create({
     margin: 10,
   },
   text: {
-    color: "#fff",
+    color: "#e4e6eb",
     fontSize: 16,
     fontWeight: "400",
+    fontFamily: "Roboto",
   },
   smallText: {
     color: "#fff",
@@ -49,10 +50,12 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   activityStats: {
-    borderColor: "grey",
-    borderRadius: 10,
-    borderWidth: 5,
-    margin: 3,
+    borderRadius: 5,
+    height: 400,
+    // borderWidth: 2,
+    margin: 5,
+    marginHorizontal: 10,
+    backgroundColor: "#242526",
   },
   activityStatsRow: {
     display: "flex",
@@ -74,7 +77,7 @@ const styles = StyleSheet.create({
   home: {
     flex: 1,
     flexDirection: "column",
-    backgroundColor: "#000",
+    backgroundColor: "#18191a",
   },
 });
 
