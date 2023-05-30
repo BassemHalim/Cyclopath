@@ -3,9 +3,11 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-cyclopath/src/main/resources/application.properties
-cyclopath/activities_samples/
-cyclopath/state.json
+
+src/main/resources/application.properties
+activities_samples/
+state.json
+
 ### STS ###
 .apt_generated
 .classpath
@@ -33,3 +35,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+.gradle
+build/
+.mvn/
+
+
