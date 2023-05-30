@@ -39,5 +39,7 @@ build/
 .gradle
 build/
 .mvn/
-
+mvnw
+mvnw.cmd
+pom.xml
 
