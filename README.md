@@ -3,16 +3,16 @@
 - a workout app that focuses on cycling. The app is meant to combine multiple features from existing
   apps into a single app.
 - main features:
-  - Sync activities from Garmin Connect
-  - Display weather info for every activity especially wind direction and speed
-  - Display the workout map in addition to Heart Rate data and speed/section
-  - Monitor and display user progress over time
-    ![img.png](./cyclopath/img.png)
-  - plan and save routes using maps and weather forecast
+    - Sync activities from Garmin Connect
+    - Display weather info for every activity especially wind direction and speed
+    - Display the workout map in addition to Heart Rate data and speed/section
+    - Monitor and display user progress over time
+      ![img.png](img.png)
+    - plan and save routes using maps and weather forecast
 - Nice-to-have features:
-  - record activities from within app
-  - add pictures to activities
-  - personal heatmap
+    - record activities from within app
+    - add pictures to activities
+    - personal heatmap
 
 ## API:
 
