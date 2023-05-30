@@ -35,9 +35,9 @@ public class ActivityController {
     }
 
 
-    @GetMapping("migrate")
-    ResponseEntity<String> migrate() {
-        activityService.updateSortKeys();
-        return ResponseEntity.ok("done");
-    }
+//    @GetMapping("migrate")
+//    ResponseEntity<String> migrate() {
+//        activityService.updateSortKeys();
+//        return ResponseEntity.ok("done");
+//    }
 }

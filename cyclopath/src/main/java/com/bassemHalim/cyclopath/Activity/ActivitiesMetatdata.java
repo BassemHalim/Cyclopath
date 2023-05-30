@@ -51,4 +51,8 @@ public class ActivitiesMetatdata {
     public void removeActivity(Long id) {
         savedActivities.remove(id);
     }
+
+    public boolean hasActivity(Long ID) {
+        return savedActivities.contains(ID);
+    }
 }

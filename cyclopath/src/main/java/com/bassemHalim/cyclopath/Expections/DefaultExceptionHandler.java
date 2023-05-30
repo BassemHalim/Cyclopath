@@ -33,7 +33,7 @@ public class DefaultExceptionHandler {
 
         APIError error = new APIError(
                 request.getRequestURI(),
-                e.getMessage(),
+                e.getErrorMessage(),
                 HttpStatus.NOT_FOUND.value(),
                 LocalDateTime.now().toString()
         );
@@ -51,7 +51,7 @@ public class DefaultExceptionHandler {
                 HttpStatus.UNAUTHORIZED.value(),
                 LocalDateTime.now().toString()
         );
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
 
     }
 

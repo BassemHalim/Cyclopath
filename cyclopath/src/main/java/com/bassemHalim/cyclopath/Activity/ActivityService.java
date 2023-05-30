@@ -82,6 +82,8 @@ public class ActivityService {
 
 
     public List<ActivityDTO> getActivityList(@NotNull @Positive int start, @NotNull @Positive int limit) {
+//        syncActivities(start, limit);
+
         List<Activity> activityList = repository.batchGetActivity(limit, UserService.getCurrentUser().getId());
         List<Activity> toBeSaved = new ArrayList<>(limit);
         List<Route> routesToBeSave = new LinkedList<>();
@@ -124,6 +126,7 @@ public class ActivityService {
         // if not get updated activity list from garmin
         // download the activity from garmin and saveUser it to dynamo
         // get activity list from dynamo
+        if (!activityExists(ID)) throw new ResourceNotFoundException("activity not found");
         String UUID = UserService.getCurrentUser().getId();
         ActivitiesMetatdata activitiesMetatdata = getActivitiesMetatdata();
         if (activitiesMetatdata.getSavedActivities().contains(ID)) {
@@ -146,11 +149,7 @@ public class ActivityService {
         // need to update the list of activities and download the new ones
         syncActivities(0, MAX_USER_ACTIVITIES);
         // Activity should now be in DB
-        activitiesMetatdata = getActivitiesMetatdata();
-        if (!activitiesMetatdata.getSavedActivities().contains(ID)) {
-            // if ID is still missing => return null
-            throw new ResourceNotFoundException("activity not found");
-        }
+
         Activity activity = repository.getActivity(UUID, new CompositeKey("ACTIVITY", ID.toString()));
 
         return ActivityMapper.MAPPER.toDTO(activity);
@@ -158,6 +157,7 @@ public class ActivityService {
 
 
     public void deleteActivity(@NotNull @Positive Long ID) {
+        if (!activityExists(ID)) throw new ResourceNotFoundException("activity not found");
         String UUID = UserService.getCurrentUser().getId();
         ActivitiesMetatdata activitiesMetatdata = getActivitiesMetatdata();
         activitiesMetatdata.removeActivity(ID);
@@ -166,8 +166,17 @@ public class ActivityService {
     }
 
 
-    public void updateSortKeys() {
-//        repository.updateActivityCompositeKeys(UserService.getCurrentUser().getId());
-        repository.updateRouteCompositeKeys(UserService.getCurrentUser().getId());
+//    public void updateSortKeys() {
+////        repository.updateActivityCompositeKeys(UserService.getCurrentUser().getId());
+//        repository.updateRouteCompositeKeys(UserService.getCurrentUser().getId());
+//    }
+
+    public Boolean activityExists(@NotNull @Positive Long ID) {
+        ActivitiesMetatdata activitiesMetatdata = getActivitiesMetatdata();
+        if (activitiesMetatdata.hasActivity(ID)) {
+            return true;
+        }
+        List<ActivityListItemDTO> activityListItemDTOS = garminDownloader.getActivitiesList(0, 1000); // @fixme macro
+        return activityListItemDTOS.stream().anyMatch(a -> a.getActivityId() == ID);
     }
 }

@@ -1,8 +1,10 @@
 package com.bassemHalim.cyclopath.Map;
 
 
+import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 import com.bassemHalim.cyclopath.Activity.ActivityDownloader.GarminDownloader;
 import com.bassemHalim.cyclopath.Activity.ActivityService;
+import com.bassemHalim.cyclopath.Repositoy.MapRepository;
 import com.bassemHalim.cyclopath.Repositoy.SingleTableDB;
 import com.bassemHalim.cyclopath.User.UserService;
 import com.bassemHalim.cyclopath.Utils.CompositeKey;
@@ -19,6 +21,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,7 +37,8 @@ public class MapService {
     private SingleTableDB repository;
     @Autowired
     private GarminDownloader garminDownloader;
-
+    @Autowired
+    private MapRepository mapRepository;
     @Value("${mapbox.publicKey}")
     private String MAPBOX_ACCESS_TOKEN;
 
@@ -43,12 +50,26 @@ public class MapService {
      */
     public Optional<HttpUrl> getMap(long activityID) {
         //@TODO change logic to get image from s3
-
+        log.info("getting map");
         // check if in S3
+        String key = UserService.getCurrentUser().getId() + String.format("#%012d", activityID);
+        if (mapRepository.objectExists(key)) {
+            return Optional.of(mapRepository.generatePresignedUrl(key).orElseThrow());
+//            byte[] data = mapRepository.getObject(key).orElseThrow();
+//            ByteArrayInputStream bis = new ByteArrayInputStream(data);
+//            try {
+//                BufferedImage bImage2 = ImageIO.read(bis);
+//                ImageIO.write(bImage2, "png", new File("/mnt/projects/BikeApp/cyclopath/activities_samples/output.png"));
+//
+//            } catch (Exception e) {
+//                log.info(e.getMessage());
+//            }
+        }
         // if not in S3 get route
         Route route = getRoute(activityID);
         HttpUrl url = generateMap(route).orElseThrow();
         return Optional.of(url);
+
     }
 
     /**
@@ -58,6 +79,7 @@ public class MapService {
      * @return the private url where the route image is stored / maybe an object id to be stored in Route
      */
     public Optional<HttpUrl> generateMap(Route route) {
+        log.info("generating map for " + route.getActivityID());
         String json = new String(Compressor.decompress(route.getGeoJSON_zip()));
         FeatureCollection collection = FeatureCollection.fromJson(json);
         Feature feature = collection.features().get(0);
@@ -83,13 +105,25 @@ public class MapService {
                 .retina(true) // Retina 2x image will be returned
                 .logo(false)
                 .build();
-        // @TODO get image and save it to s3
+        String key = UserService.getCurrentUser().getId() + String.format("#%012d", route.getActivityID());
+        try {
+            BufferedImage map = ImageIO.read(staticImage.url().url());
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ImageIO.write(map, "png", bos);
+            byte[] data = bos.toByteArray();
+            mapRepository.putObject(key, data);
 
-        return Optional.of(staticImage.url());
+//            ImageIO.write(image, "png", new File("/mnt/projects/BikeApp/cyclopath/activities_samples/image.png"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return Optional.of(mapRepository.generatePresignedUrl(key).orElseThrow());
     }
 
     public Route getRoute(@NotNull @Positive Long ID) {
         String UUID = UserService.getCurrentUser().getId();
+        if (!activityService.activityExists(ID)) throw new ResourceNotFoundException("didn't find activity");
         Route route = repository.getRoute(UUID, new CompositeKey("ROUTE", Long.toString(ID)));
         if (route == null) {
             byte[] json = garminDownloader.getActivityRoute(ID);

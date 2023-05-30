@@ -48,7 +48,6 @@ public class ApplicationConfig {
 
     @Bean
     public Browser BrowserPool() {
-        log.info("Creating browser");
         Playwright playwright = Playwright.create();
         return playwright.firefox().launch(new BrowserType.LaunchOptions().setSlowMo(0).setHeadless(true));
     }
