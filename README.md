@@ -2,17 +2,20 @@
 
 - a workout app that focuses on cycling. The app is meant to combine multiple features from existing
   apps into a single app.
+- This is a work in progress project with the following goal features
 - main features:
-    - Sync activities from Garmin Connect
-    - Display weather info for every activity especially wind direction and speed
-    - Display the workout map in addition to Heart Rate data and speed/section
-    - Monitor and display user progress over time
+    - [x] Sync activities from Garmin Connect
+    - [x] Display weather info for every activity especially wind direction and speed
+    - [x] Display the workout static map
+    - [ ] Monitor and display user progress over time  (in progress)
       ![img.png](img.png)
-    - plan and save routes using maps and weather forecast
+    - [ ] plan and save routes using maps and weather forecast
 - Nice-to-have features:
-    - record activities from within app
-    - add pictures to activities
-    - personal heatmap
+    - [ ] record activities from within app
+    - [ ] add pictures to activities
+    - [ ] personal heatmap with a game aspect to explore your city
+    - [ ] make maps interactive
+    - [ ] overlay speed or Heart Rate on map
 
 ## API:
 
@@ -29,10 +32,13 @@ auth/signin [POST]
 ```md
 /activity/list [GET]
 /activity/{ID} [GET]
-/activity/post [POST] (in the future)
+/activity/{ID}/map [GET] // redirects to s3 download link
+/activity/post [POST] (not implemented yet)
 ```
 
 ### Progress/Stats
+
+[In Progress]
 
 ```md
 /athlete/{ID}/zones [GET]
@@ -43,7 +49,7 @@ longest distance, number of activities, etc.
 
 ## Schemas
 
-### Dynamo DB Single Table
+### Dynamo DB Single Table:
 
 | Primary Key | Sort Key     | Attributes                                                                                  |
 | ----------- | ------------ | ------------------------------------------------------------------------------------------- |
@@ -53,13 +59,8 @@ longest distance, number of activities, etc.
 | UserUUID    | ROUTE#ID     | {geoJSON_zip[] }                                                                            |
 | UserUUID    | ACTIVITYLIST | {Activity1ID,Activity2ID,...}                                                               |
 
-- activity id is the same as unix time and is only unique per user
-- this is useful for getting an activity by id or for getting activities within a date range
+### S3 key:
 
-### Access Patterns
-
-- Lookup user info by id
-- lookup user by username
-- get activity by id
-- get activities withing a date range
-- get athlete stats
+```json
+ <UserUUID>#<ActivitiyID>
+```
