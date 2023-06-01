@@ -12,10 +12,15 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React from "react";
 import { styles } from "../Style";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Props } from "../types";
+// import { Props } from "../types";
+import { StackParamList } from "../../App";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import RegularText from "../components/CustomText";
+import { useAuth } from "../hooks/AuthContext";
 
 const loginURL = "http://192.168.1.245:8080/auth/authenticate";
+
+type Props = NativeStackScreenProps<StackParamList, "SignIn">;
 
 export const storeToken = (value: string) => {
   AsyncStorage.setItem("access_token", value)
@@ -27,10 +32,10 @@ export default function SignIn({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [token, setToken] = useState<string>("");
+  // const [token, setToken] = useState<string>("");
+  const { token, setToken } = useAuth();
 
   useEffect(() => {
-    // handle infinite loop
     if (!token) {
       const fetchData = async () => {
         let tkn = await AsyncStorage.getItem("access_token");
@@ -38,9 +43,11 @@ export default function SignIn({ navigation }: Props) {
       };
       fetchData();
     }
-    if (token !== "") {
+    console.log(token);
+    if (token) {
       console.log("got token");
-      navigation.navigate("Home", token);
+
+      navigation.navigate("Home");
     }
   }, [token]);
 
@@ -68,13 +75,13 @@ export default function SignIn({ navigation }: Props) {
     fetch(loginURL, requestOptions)
       .then((response) => response.json())
       .then((data) => {
-        const token = data.token;
-        if (!token) {
+        if (!data.token) {
           Alert.alert("credentials incorrect");
           return;
         }
-        storeToken(token);
-        navigation.navigate("Home", token);
+        storeToken(data.token);
+        setToken(data.token);
+        navigation.navigate("Home");
       })
       .catch((error) => console.log("error", error));
   };

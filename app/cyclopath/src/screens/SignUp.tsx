@@ -1,19 +1,23 @@
 import { Button, Image, StyleSheet, Text, TextInput, View } from "react-native";
 import { styles } from "../Style";
-import { Props } from "../types";
+// import { Props } from "../types";
+import { StackParamList } from "../../App";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import RegularText from "../components/CustomText";
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
-const onSignup = (props: Props) => {
+type Props = NativeStackScreenProps<StackParamList, "SignUp">;
+
+const onSignup = (navigation: Props["navigation"]) => {
   console.warn("sign up");
   //@TODO handle signup
-  props.navigation.navigate("SignIn");
+  navigation.navigate("SignIn");
 };
 
-export default function SignUp({ navigation }: Props) {
+export default function SignUp({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
 
   return (

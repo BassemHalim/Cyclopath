@@ -6,24 +6,33 @@ import Home from "./src/screens/Home";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Suspense } from "react";
+import { User, UserProvider } from "./src/hooks/AuthContext";
 
-const Stack = createNativeStackNavigator();
+export type StackParamList = {
+  Home: undefined;
+  SignIn: undefined;
+  SignUp: undefined;
+};
+
+const Stack = createNativeStackNavigator<StackParamList>();
 
 export default function App() {
   return (
-    <Suspense fallback={<ActivityIndicator />}>
-      <SafeAreaProvider>
-        <NavigationContainer>
-          <Stack.Navigator
-            initialRouteName="SignIn"
-            screenOptions={{ headerShown: false }}
-          >
-            <Stack.Screen name="SignUp" component={SignUp} />
-            <Stack.Screen name="SignIn" component={SignIn} />
-            <Stack.Screen name="Home" component={Home} />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </SafeAreaProvider>
-    </Suspense>
+    <UserProvider>
+      <Suspense fallback={<ActivityIndicator />}>
+        <SafeAreaProvider>
+          <NavigationContainer>
+            <Stack.Navigator
+              initialRouteName="SignIn"
+              screenOptions={{ headerShown: false }}
+            >
+              <Stack.Screen name="SignUp" component={SignUp} />
+              <Stack.Screen name="SignIn" component={SignIn} />
+              <Stack.Screen name="Home" component={Home} />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </SafeAreaProvider>
+      </Suspense>
+    </UserProvider>
   );
 }

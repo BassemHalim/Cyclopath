@@ -73,6 +73,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     margin: 10,
     alignSelf: "center",
+    backgroundColor: "white",
   },
   home: {
     flex: 1,

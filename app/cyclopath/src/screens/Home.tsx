@@ -1,23 +1,18 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Button,
-  Image,
-  Text,
-  TextInput,
-  View,
-  RefreshControl,
-  StatusBar,
-} from "react-native";
-import { Props } from "../types";
+import { View, RefreshControl, StatusBar } from "react-native";
+// import { Props } from "../types";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { StackParamList } from "../../App";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ScrollView } from "react-native-gesture-handler";
 import Activity, { ActivityDTO, Convert } from "../components/Activity";
 import { styles } from "../Style";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import RegularText from "../components/CustomText";
+import { UserProvider, useAuth } from "../hooks/AuthContext";
+import { User } from "../hooks/AuthContext";
 const activityListURL: string =
-  "http://192.168.1.245:8080/activity/activity-list?limit=5";
+  "http://192.168.1.245:8080/activity/activity-list?limit=1";
 
 async function getActivityList(token: string): Promise<ActivityDTO[] | null> {
   if (token == "") return null;
@@ -51,21 +46,18 @@ async function getActivityList(token: string): Promise<ActivityDTO[] | null> {
   return null;
 }
 
-const Home: React.FC<Props> = (props) => {
+type Props = NativeStackScreenProps<StackParamList, "Home">;
+
+const Home: React.FC<Props> = (props: Props) => {
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
-
-  // const [token, setToken] = useState<string>(props.token);
-  let token = props.token;
+  const { token, setToken } = useAuth();
+  if (!token) {
+    props.navigation.navigate("SignIn");
+  }
   const [activitites, setActivities] = useState<ActivityDTO[]>([]);
 
   const fetchData = async () => {
-    if (!token) {
-      let tkn: string | null = await AsyncStorage.getItem("access_token");
-      if (tkn) {
-        token = tkn;
-      }
-    }
     if (token) {
       let activityLst: ActivityDTO[] | null = await getActivityList(token);
       if (activityLst) {
@@ -74,9 +66,10 @@ const Home: React.FC<Props> = (props) => {
       setRefreshing(false);
     }
   };
+
   useEffect(() => {
     // handle infinite loop
-    if (token != "") {
+    if (token) {
       fetchData();
     }
   }, [token]);
@@ -86,6 +79,7 @@ const Home: React.FC<Props> = (props) => {
     await fetchData();
     setRefreshing(false);
   }, []);
+
   return (
     <View
       style={[
@@ -103,7 +97,7 @@ const Home: React.FC<Props> = (props) => {
         }
       >
         {activitites.map((item, index) => (
-          <Activity DTO={item} key={index}  />
+          <Activity DTO={item} key={index} />
         ))}
       </ScrollView>
     </View>

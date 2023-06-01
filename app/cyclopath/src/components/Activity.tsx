@@ -2,7 +2,8 @@ import { ActivityIndicator, Image, Text, View } from "react-native";
 import { styles } from "../Style";
 import RegularText from "./CustomText";
 import { Suspense, useState, useEffect } from "react";
-import { log } from "react-native-reanimated";
+import { block, log } from "react-native-reanimated";
+import { useAuth } from "../hooks/AuthContext";
 
 export interface ActivityDTO {
   activityId: number;
@@ -44,6 +45,7 @@ export class Convert {
     return JSON.stringify(value);
   }
 }
+
 const formatDate = (date: Date): string => {
   const yyyy = date.getFullYear();
   let mm = date.getMonth() + 1; // Months start at 0!
@@ -55,7 +57,7 @@ const formatDate = (date: Date): string => {
 
 export default function Activity(props: { DTO: ActivityDTO; key: number }) {
   const [imageurl, setImageurl] = useState("../../assets/media/samplemap.png");
-
+  let { token, setToken } = useAuth();
   let DTO = props.DTO;
   const distanceInMiles: number = DTO.distance / 1609;
   const durationInHours: number = DTO.duration / 3600;
@@ -63,35 +65,49 @@ export default function Activity(props: { DTO: ActivityDTO; key: number }) {
   const date = new Date(DTO.startTimeLocal);
   const mapurl: string = `http://192.168.1.245:8080/activity/${DTO.activityId}/map`;
 
-  // useEffect(() => {
-  //   const fetchImageWithRedirect = async () => {
-  //     if (!props.token) {
-  //       return;
-  //     }
-  //     try {
-  //       var myHeaders = new Headers();
-  //       myHeaders.append("Authorization", "Bearer " + props.token);
-  //       var requestOptions = {
-  //         method: "GET",
-  //         headers: myHeaders,
-  //         redirect: "follow",
-  //       };
-  //       const response = await fetch(mapurl, requestOptions);
+  useEffect(() => {
+    const fetchImageWithRedirect = async () => {
+      if (!token) {
+        return;
+      }
+      try {
+        var myHeaders = new Headers();
+        myHeaders.append("Authorization", "Bearer " + token);
+        var requestOptions = {
+          method: "GET",
+          // headers: myHeaders,
+          redirect: "follow",
+        };
+        const response = await fetch(
+          "https://encrypted-tbn0.gstatic.com/licensed-image?q=tbn:ANd9GcSoPravXdZRihoO83Kd7TwlZBik03ZXlDZvBYx5ZyotO_RWKE7d_G_nFxBTjPE1yTILP7qUl2Q_rtbLUsk",
+          requestOptions
+        );
 
-  //       if (!response.ok) {
-  //         throw new Error(`HTTP error! Status: ${response.status}`);
-  //       }
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
 
-  //       const imageBlob = await response.blob();
-  //       let url: string = URL.createObjectURL(imageBlob);
-  //       setImageurl(url);
-  //     } catch (error) {
-  //       console.error("Error fetching image:", error);
-  //     }
-  //   };
-  //   fetchImageWithRedirect();
-  // }, [imageurl]);
-  // console.log(mapurl);
+        const imageBlob = await response.blob();
+        // function blobToBase64(blob: Blob) {
+        //   return new Promise((resolve, _) => {
+        //     const reader = new FileReader();
+        //     reader.onloadend = () => resolve(reader.result);
+        //     reader.readAsDataURL(blob);
+        //   });
+        // }
+        // let imageBlob64 = await blobToBase64(imageBlob);
+        // let url: string = URL.createObjectURL(imageBlob); // doesn't work on android
+        let reader = new FileReader();
+        reader.readAsDataURL(imageBlob)
+        console.log(url);
+        setImageurl(url);
+      } catch (error) {
+        console.error("Error fetching image:", error);
+      }
+    };
+    fetchImageWithRedirect();
+  }, [token]);
+  console.log(mapurl);
 
   return (
     <View style={styles.activityStats}>
@@ -114,8 +130,9 @@ export default function Activity(props: { DTO: ActivityDTO; key: number }) {
       <Suspense fallback={<ActivityIndicator />}>
         <View style={{ flex: 2 }}>
           <Image
-            source={require("../../assets/media/samplemap.png")}
-            // resizeMode="center"
+            // source={require("../../assets/media/samplemap.png")}
+            resizeMode="center"
+            source={{ uri: imageurl }}
             style={styles.activityMap}
           />
         </View>
