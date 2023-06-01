@@ -1,5 +1,9 @@
 # Cyclopath
 
+__Definition:__  Cycopath A person suffering from chronic bike riding disorder with abnormal urges to ride and feel free
+
+## Goal:
+
 - a workout app that focuses on cycling. The app is meant to combine multiple features from existing
   apps into a single app.
 - This is a work in progress project with the following goal features
