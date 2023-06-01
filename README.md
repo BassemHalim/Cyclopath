@@ -61,6 +61,6 @@ longest distance, number of activities, etc.
 
 ### S3 key:
 
-```json
+```
  <UserUUID>#<ActivitiyID>
 ```
