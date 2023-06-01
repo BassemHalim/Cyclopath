@@ -9,17 +9,17 @@ __Definition:__  Cycopath A person suffering from chronic bike riding disorder w
 - This is a work in progress project with the following goal features
     - __main features:__
         - [x] Sync activities from Garmin Connect
-            - [x] Display weather info for every activity especially wind direction and speed
-            - [x] Display the workout static map
-                - [ ] Monitor and display user progress over time  (in progress)
-                  ![img.png](img.png)
-            - [ ] plan and save routes using maps and weather forecast
+        - [x] Display weather info for every activity especially wind direction and speed
+        - [x] Display the workout static map
+        - [ ] Monitor and display user progress over time  (in progress)
+          ![img.png](img.png)
+        - [ ] plan and save routes using maps and weather forecast
     - __Nice-to-have features:__
         - [ ] record activities from within app
-            - [ ] add pictures to activities
-            - [ ] personal heatmap with a game aspect to explore your city
-            - [ ] make maps interactive
-            - [ ] overlay speed or Heart Rate on map
+        - [ ] add pictures to activities
+        - [ ] personal heatmap with a game aspect to explore your city
+        - [ ] make maps interactive
+        - [ ] overlay speed or Heart Rate on map
 
 ## API:
 
