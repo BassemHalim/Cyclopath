@@ -1,9 +1,11 @@
 import { ActivityIndicator, Image, Text, View } from "react-native";
+
 import { styles } from "../Style";
 import RegularText from "./CustomText";
 import { Suspense, useState, useEffect } from "react";
-import { block, log } from "react-native-reanimated";
 import { useAuth } from "../hooks/AuthContext";
+import * as FileSystem from "expo-file-system";
+import { resolveTripleslashReference } from "typescript";
 
 export interface ActivityDTO {
   activityId: number;
@@ -73,41 +75,36 @@ export default function Activity(props: { DTO: ActivityDTO; key: number }) {
       try {
         var myHeaders = new Headers();
         myHeaders.append("Authorization", "Bearer " + token);
+
         var requestOptions = {
           method: "GET",
-          // headers: myHeaders,
+          headers: myHeaders,
           redirect: "follow",
         };
-        const response = await fetch(
-          "https://encrypted-tbn0.gstatic.com/licensed-image?q=tbn:ANd9GcSoPravXdZRihoO83Kd7TwlZBik03ZXlDZvBYx5ZyotO_RWKE7d_G_nFxBTjPE1yTILP7qUl2Q_rtbLUsk",
-          requestOptions
-        );
+
+        const response = await fetch(mapurl, requestOptions);
 
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
-
+        console.log('fetched image')
         const imageBlob = await response.blob();
-        // function blobToBase64(blob: Blob) {
-        //   return new Promise((resolve, _) => {
-        //     const reader = new FileReader();
-        //     reader.onloadend = () => resolve(reader.result);
-        //     reader.readAsDataURL(blob);
-        //   });
-        // }
-        // let imageBlob64 = await blobToBase64(imageBlob);
-        // let url: string = URL.createObjectURL(imageBlob); // doesn't work on android
-        let reader = new FileReader();
-        reader.readAsDataURL(imageBlob)
-        console.log(url);
-        setImageurl(url);
+        function blobToDataURL(blob: Blob, callback: any) {
+          var a = new FileReader();
+          a.onload = function (e) {
+            callback(e.target.result);
+          };
+          a.readAsDataURL(blob);
+        }
+        blobToDataURL(imageBlob, function (dataurl: string) {
+          setImageurl(dataurl);
+        });
       } catch (error) {
         console.error("Error fetching image:", error);
       }
     };
     fetchImageWithRedirect();
-  }, [token]);
-  console.log(mapurl);
+  }, []);
 
   return (
     <View style={styles.activityStats}>
@@ -131,8 +128,10 @@ export default function Activity(props: { DTO: ActivityDTO; key: number }) {
         <View style={{ flex: 2 }}>
           <Image
             // source={require("../../assets/media/samplemap.png")}
-            resizeMode="center"
-            source={{ uri: imageurl }}
+            // resizeMode="center"
+            source={{
+              uri: imageurl,
+            }}
             style={styles.activityMap}
           />
         </View>

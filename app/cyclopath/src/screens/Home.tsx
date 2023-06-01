@@ -9,10 +9,9 @@ import Activity, { ActivityDTO, Convert } from "../components/Activity";
 import { styles } from "../Style";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import RegularText from "../components/CustomText";
-import { UserProvider, useAuth } from "../hooks/AuthContext";
-import { User } from "../hooks/AuthContext";
+import { useAuth } from "../hooks/AuthContext";
 const activityListURL: string =
-  "http://192.168.1.245:8080/activity/activity-list?limit=1";
+  "http://192.168.1.245:8080/activity/activity-list?limit=5";
 
 async function getActivityList(token: string): Promise<ActivityDTO[] | null> {
   if (token == "") return null;
