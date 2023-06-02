@@ -1,6 +1,10 @@
 # Cyclopath
 
-__Definition:__  Cycopath A person suffering from chronic bike riding disorder with abnormal urges to ride and feel free
+<img src="/mnt/projects/BikeApp/cyclopath/app/cyclopath/assets/media/logo.png" style="margin:auto; display:block"   />
+
+__Definition:__
+
+Cycopath: A person suffering from chronic bike riding disorder with abnormal urges to ride and feel free
 
 ## Goal:
 
