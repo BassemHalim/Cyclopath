@@ -25,6 +25,8 @@ Cycopath: A person suffering from chronic bike riding disorder with abnormal urg
         - [ ] make maps interactive
         - [ ] overlay speed or Heart Rate on map
 
+<img src="./app/cyclopath/assets/media/screenshot.png" style="margin:auto; display:block; height:400; width: 200"   />
+
 ## API:
 
 ### Users
