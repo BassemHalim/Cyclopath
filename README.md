@@ -1,6 +1,6 @@
 # Cyclopath
 
-<img src="/mnt/projects/BikeApp/cyclopath/app/cyclopath/assets/media/logo.png" style="margin:auto; display:block"   />
+<img src="./app/cyclopath/assets/media/logo.png" style="margin:auto; display:block"   />
 
 __Definition:__
 
