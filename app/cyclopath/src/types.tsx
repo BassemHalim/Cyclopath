@@ -30,5 +30,19 @@ export interface ActivityDTO {
   startTimeGMT: Date;
   startTimeLocal: Date;
   timeZoneId: number;
-  weather: undefined;
+  weather: Weather;
+}
+
+export interface Weather {
+  apparentTemp: number;
+  dewPoint: number;
+  issueDate: string;
+  latitude: number;
+  longitude: number;
+  relativeHumidity: number;
+  temp: number;
+  windDirection: number;
+  windDirectionCompassPoint: string;
+  windGust: number;
+  windSpeed: number;
 }

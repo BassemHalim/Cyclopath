@@ -1,5 +1,5 @@
 import { ActivityIndicator, Image, Text, View } from "react-native";
-import { ActivityDTO } from "../types";
+import { ActivityDTO, Weather } from "../types";
 import { styles } from "../Style";
 import { RegularText } from "./CustomText";
 import { Suspense, useState, useEffect } from "react";
@@ -95,15 +95,18 @@ export default function Activity(props: { DTO: ActivityDTO; key: number }) {
             units="hrs"
           />
           <Stat title="Speed" value={averageSpeedMPH.toFixed(2)} units="mph" />
-        </View>
-        <View style={styles.activityStatsRow}>
           <Stat
             title="Elev. Gain"
             value={elevationGaininft.toFixed(2)}
             units="ft"
           />
+        </View>
+        <View style={styles.activityStatsRow}>
           <Stat title="Calories" value={DTO.calories} units="" />
-          
+          <Stat title="Temperature" value={DTO.weather.temp} units="f" />
+          <Stat title="Wind speed" value={DTO.weather.windSpeed} units="mph" />
+          <Stat title="Wind dir." value={DTO.weather.windDirectionCompassPoint} units="" />
+
         </View>
       </View>
 

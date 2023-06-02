@@ -61,13 +61,13 @@ longest distance, number of activities, etc.
 
 ### Dynamo DB Single Table:
 
-| Primary Key | Sort Key     | Attributes                                                                                  |
-| ----------- | ------------ | ------------------------------------------------------------------------------------------- |
-| UserUUID    | PROFILE      | {Username:STRING, Email: STRING, Password:STRING, ID:LONG, weight:FLOAT, Hight(cm):INT,...} |
-| UserUUID    | STATS        | {LongestRideID:LONG, numActivities:INT, ...}                                                |
-| UserUUID    | ACTIVITY#ID  | {Name, CreationTime, Distance, CaloriesBurned, Comments, weather:Weather}                   |
-| UserUUID    | ROUTE#ID     | {geoJSON_zip[] }                                                                            |
-| UserUUID    | ACTIVITYLIST | {Activity1ID,Activity2ID,...}                                                               |
+| Primary Key | Sort Key    | Attributes                                                                                  |
+| ----------- |-------------| ------------------------------------------------------------------------------------------- |
+| UserUUID    | PROFILE     | {Username:STRING, Email: STRING, Password:STRING, ID:LONG, weight:FLOAT, Hight(cm):INT,...} |
+| UserUUID    | STATS       | {LongestRideID:LONG, numActivities:INT, ...}                                                |
+| UserUUID    | ACTIVITY#ID | {Name, CreationTime, Distance, CaloriesBurned, Comments, weather:Weather}                   |
+| UserUUID    | ROUTE#ID    | {geoJSON_zip[] }                                                                            |
+| UserUUID    | METADATA    | {Activity1ID,Activity2ID,...}                                                               |
 
 ### S3 key:
 
