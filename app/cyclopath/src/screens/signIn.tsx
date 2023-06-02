@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 // import { Props } from "../types";
 import { StackParamList } from "../../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import RegularText from "../components/CustomText";
+import { RegularText } from "../components/CustomText";
 import { useAuth } from "../hooks/AuthContext";
 
 const loginURL = "http://192.168.1.245:8080/auth/authenticate";
@@ -43,10 +43,7 @@ export default function SignIn({ navigation }: Props) {
       };
       fetchData();
     }
-    console.log(token);
     if (token) {
-      console.log("got token");
-
       navigation.navigate("Home");
     }
   }, [token]);

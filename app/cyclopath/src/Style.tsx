@@ -24,6 +24,19 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 14,
     margin: 20,
+    justifyContent: "center",
+  },
+  statTitle: {
+    color: "#898F9C",
+    fontSize: 14,
+    fontFamily: "Roboto",
+    textAlign: "center",
+  },
+  statValue: {
+    color: "#e4e6eb",
+    fontSize: 17,
+    fontFamily: "Roboto",
+    textAlign: "center",
   },
   inputBox: {
     color: "#fff",
@@ -39,7 +52,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   logo: {
-    // flex: 1,
     width: "80%",
     height: 200,
     maxHeight: 200,
@@ -52,17 +64,23 @@ const styles = StyleSheet.create({
   activityStats: {
     borderRadius: 5,
     height: 400,
-    // borderWidth: 2,
     margin: 5,
     marginHorizontal: 10,
     backgroundColor: "#242526",
   },
+  activityStat: {
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "space-around",
+    alignSelf: "center",
+  },
   activityStatsRow: {
-    display: "flex",
+    // display: "flex",
+    flex: 1,
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-around",
-    margin: 10,
+    // margin: 5,
   },
   activityMap: {
     flex: 1,

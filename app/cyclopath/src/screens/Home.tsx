@@ -3,15 +3,15 @@ import { View, RefreshControl, StatusBar } from "react-native";
 // import { Props } from "../types";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { StackParamList } from "../../App";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ScrollView } from "react-native-gesture-handler";
-import Activity, { ActivityDTO, Convert } from "../components/Activity";
+import Activity, { Convert } from "../components/Activity";
+import { ActivityDTO } from "../types";
 import { styles } from "../Style";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import RegularText from "../components/CustomText";
+import { RegularText } from "../components/CustomText";
 import { useAuth } from "../hooks/AuthContext";
 const activityListURL: string =
-  "http://192.168.1.245:8080/activity/activity-list?limit=5";
+  "http://192.168.1.245:8080/activity/activity-list?limit=3";
 
 async function getActivityList(token: string): Promise<ActivityDTO[] | null> {
   if (token == "") return null;
@@ -37,8 +37,6 @@ async function getActivityList(token: string): Promise<ActivityDTO[] | null> {
 
     const activityList: ActivityDTO[] = Convert.toActivity(json);
     return activityList;
-    // console.log(json);
-    // return JSON.parse(json);
   } catch (e) {
     console.log("fetch error " + e);
   }

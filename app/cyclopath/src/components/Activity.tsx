@@ -1,42 +1,10 @@
 import { ActivityIndicator, Image, Text, View } from "react-native";
-
+import { ActivityDTO } from "../types";
 import { styles } from "../Style";
-import RegularText from "./CustomText";
+import { RegularText } from "./CustomText";
 import { Suspense, useState, useEffect } from "react";
 import { useAuth } from "../hooks/AuthContext";
-import * as FileSystem from "expo-file-system";
-import { resolveTripleslashReference } from "typescript";
-
-export interface ActivityDTO {
-  activityId: number;
-  activityName: string;
-  averageHR: number;
-  averageSpeed: number;
-  bmrCalories: number;
-  calories: number;
-  distance: number;
-  duration: number;
-  elapsedDuration: number;
-  elevationCorrected: boolean;
-  elevationGain: number;
-  elevationLoss: number;
-  endLatitude: number;
-  endLongitude: number;
-  locationName: string;
-  maxElevation: number;
-  maxHR: number;
-  maxSpeed: number;
-  maxVerticalSpeed: number;
-  minActivityLapDuration: number;
-  minElevation: number;
-  movingDuration: number;
-  startLatitude: number;
-  startLongitude: number;
-  startTimeGMT: Date;
-  startTimeLocal: Date;
-  timeZoneId: number;
-  weather: null;
-}
+import { Stat } from "./stat";
 
 export class Convert {
   public static toActivity(json: string): ActivityDTO[] {
@@ -63,6 +31,8 @@ export default function Activity(props: { DTO: ActivityDTO; key: number }) {
   let DTO = props.DTO;
   const distanceInMiles: number = DTO.distance / 1609;
   const durationInHours: number = DTO.duration / 3600;
+  const movingDuration: number = DTO.movingDuration / 3600;
+  const averageSpeedMPH: number = DTO.averageSpeed * 2.237;
   const elevationGaininft: number = DTO.elevationGain * 3.281;
   const date = new Date(DTO.startTimeLocal);
   const mapurl: string = `http://192.168.1.245:8080/activity/${DTO.activityId}/map`;
@@ -87,12 +57,12 @@ export default function Activity(props: { DTO: ActivityDTO; key: number }) {
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
-        console.log('fetched image')
+        console.log("fetched image");
         const imageBlob = await response.blob();
         function blobToDataURL(blob: Blob, callback: any) {
           var a = new FileReader();
           a.onload = function (e) {
-            callback(e.target.result);
+            if (e.target) callback(e.target.result);
           };
           a.readAsDataURL(blob);
         }
@@ -114,16 +84,29 @@ export default function Activity(props: { DTO: ActivityDTO; key: number }) {
           <RegularText> {formatDate(date)} </RegularText>
         </View>
         <View style={styles.activityStatsRow}>
-          <RegularText>Calories: {DTO.calories.toFixed(2)}</RegularText>
-          <RegularText>Distance: {distanceInMiles.toFixed(2)}</RegularText>
+          <Stat
+            title="Distance"
+            value={distanceInMiles.toFixed(2)}
+            units="mi"
+          />
+          <Stat
+            title="Duration"
+            value={durationInHours.toFixed(2)}
+            units="hrs"
+          />
+          <Stat title="Speed" value={averageSpeedMPH.toFixed(2)} units="mph" />
         </View>
         <View style={styles.activityStatsRow}>
-          <RegularText>Duration: {durationInHours.toFixed(2)}</RegularText>
-          <RegularText>
-            Elevation Gain: {elevationGaininft.toFixed(2)}
-          </RegularText>
+          <Stat
+            title="Elev. Gain"
+            value={elevationGaininft.toFixed(2)}
+            units="ft"
+          />
+          <Stat title="Calories" value={DTO.calories} units="" />
+          
         </View>
       </View>
+
       <Suspense fallback={<ActivityIndicator />}>
         <View style={{ flex: 2 }}>
           <Image
