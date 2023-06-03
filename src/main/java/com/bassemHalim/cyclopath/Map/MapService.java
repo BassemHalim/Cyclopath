@@ -49,7 +49,6 @@ public class MapService {
      * @return URL to the image
      */
     public Optional<HttpUrl> getMap(long activityID) {
-        log.info("getting map");
         // check if in S3
         String key = UserService.getCurrentUser().getId() + String.format("#%012d", activityID);
         if (mapRepository.objectExists(key)) {
@@ -89,8 +88,8 @@ public class MapService {
                 .styleId(StaticMapCriteria.OUTDOORS_STYLE)
                 .cameraAuto(true)
                 .geoJson(newCollection)
-                .width(300) // Image width
-                .height(200) // Image height
+                .width(300)
+                .height(200)
                 .retina(true) // Retina 2x image will be returned
                 .logo(false)
                 .build();

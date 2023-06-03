@@ -34,6 +34,5 @@ public class ActivityDTO {
     private String startTimeGMT;
     private String startTimeLocal;
     private int timeZoneId;
-    //    private byte[] geoJSON_gzip;
     private Weather weather;
 }

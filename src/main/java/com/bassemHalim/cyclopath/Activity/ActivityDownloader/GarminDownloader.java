@@ -41,16 +41,18 @@ import java.util.List;
  *
  * @author Bassem Halim
  */
+@SuppressWarnings("FieldCanBeLocal")
 @Service
 @RequiredArgsConstructor
 @Log
 public class GarminDownloader implements ActivityDownloader {
 
-    private static final String GARMIN_BASE_URL = "https://connect.garmin.com";
-    private final String GARMIN_SIGNIN_URL = GARMIN_BASE_URL + "/signin";
-    private final String GARMIN_ACTIVITY_LIST_URL = GARMIN_BASE_URL + "/activitylist-service/activities/search/activities";
-    private final String GARMIN_ACTIVITY_GPX_URL = GARMIN_BASE_URL + "/download-service/export/gpx/activity/";
-    private final String GARMIN_ACTIVITY_SERVICE_URL = GARMIN_BASE_URL + "/activity-service/activity/";
+    private static String GARMIN_BASE_URL = "https://connect.garmin.com";
+    private static String GARMIN_SIGNIN_URL = GARMIN_BASE_URL + "/signin";
+    private static String GARMIN_ACTIVITY_LIST_URL = GARMIN_BASE_URL + "/activitylist-service/activities/search" +
+            "/activities";
+    private static String GARMIN_ACTIVITY_GPX_URL = GARMIN_BASE_URL + "/download-service/export/gpx/activity/";
+    private static String GARMIN_ACTIVITY_SERVICE_URL = GARMIN_BASE_URL + "/activity-service/activity/";
     @Value("${Garmin.USERNAME}")
     @NotNull
     @Email
@@ -79,7 +81,7 @@ public class GarminDownloader implements ActivityDownloader {
         // sign in
         // check if saved tokens are valid
         if (!getAccessToken(page.context().storageState())) {
-            Response response = page.navigate(this.GARMIN_SIGNIN_URL);
+            Response response = page.navigate(GARMIN_SIGNIN_URL);
             page.locator("#email").waitFor();
 //            page.waitForURL("https://sso.garmin.com/portal/sso/en-US/sign-in?clientId=GarminConnect&service=https://connect.garmin.com/modern");
             // -------------------------------------------------------
@@ -150,10 +152,11 @@ public class GarminDownloader implements ActivityDownloader {
         User currentUser = UserService.getCurrentUser();
         BrowserContext context = currentUser.getBrowserContext();
         if (context == null) {
-            context = browser.newContext(new Browser.NewContextOptions().setStorageState(currentUser.getBrowserState()));
+            context =
+                    browser.newContext(new Browser.NewContextOptions().setStorageState(currentUser.getBrowserState()));
             UserService.getCurrentUser().setBrowserContext(context);
         }
-        APIResponse response = context.request().get(this.GARMIN_ACTIVITY_LIST_URL, RequestOptions.create()
+        APIResponse response = context.request().get(GARMIN_ACTIVITY_LIST_URL, RequestOptions.create()
                 .setQueryParam("limit", limit)
                 .setQueryParam("start", start)
                 .setHeader("authorization", "Bearer " + this.access_token)
@@ -186,18 +189,20 @@ public class GarminDownloader implements ActivityDownloader {
         User currentUser = UserService.getCurrentUser();
         BrowserContext context = currentUser.getBrowserContext();
         if (context == null) {
-            context = browser.newContext(new Browser.NewContextOptions().setStorageState(currentUser.getBrowserState()));
+            context =
+                    browser.newContext(new Browser.NewContextOptions().setStorageState(currentUser.getBrowserState()));
             UserService.getCurrentUser().setBrowserContext(context);
         }
-        APIResponse response = context.request().get(this.GARMIN_ACTIVITY_SERVICE_URL + ID.toString(), RequestOptions.create()
-                .setHeader("authorization", "Bearer " + this.access_token)
-                .setHeader("di-backend", "connectapi.garmin.com")
-                .setHeader("dnt", "1")
-                .setHeader("nk", "NT")
-                .setHeader("referer", "https://connect.garmin.com/modern/activity/" + ID)
-                .setHeader("x-app-ver", "4.67.0.16")
-                .setHeader("x-requested-with", "XMLHttpRequest")
-        );
+        APIResponse response = context.request()
+                .get(GARMIN_ACTIVITY_SERVICE_URL + ID.toString(), RequestOptions.create()
+                        .setHeader("authorization", "Bearer " + this.access_token)
+                        .setHeader("di-backend", "connectapi.garmin.com")
+                        .setHeader("dnt", "1")
+                        .setHeader("nk", "NT")
+                        .setHeader("referer", "https://connect.garmin.com/modern/activity/" + ID)
+                        .setHeader("x-app-ver", "4.67.0.16")
+                        .setHeader("x-requested-with", "XMLHttpRequest")
+                );
 
         if (!response.ok()) {
             throw new RuntimeException(response.statusText() + "couldn't download activity file");
@@ -225,7 +230,8 @@ public class GarminDownloader implements ActivityDownloader {
         User currentUser = UserService.getCurrentUser();
         BrowserContext context = currentUser.getBrowserContext();
         if (context == null) {
-            context = browser.newContext(new Browser.NewContextOptions().setStorageState(currentUser.getBrowserState()));
+            context =
+                    browser.newContext(new Browser.NewContextOptions().setStorageState(currentUser.getBrowserState()));
             UserService.getCurrentUser().setBrowserContext(context);
         }
         APIResponse response = context.request().get(GARMIN_ACTIVITY_GPX_URL + id.toString(), RequestOptions.create()
@@ -254,8 +260,8 @@ public class GarminDownloader implements ActivityDownloader {
     }
 
     /**
-     * @param id
-     * @return
+     * @param id ActivityID
+     * @return weather object
      * @Target_URL: https://connect.garmin.com/activity-service/activity/{ID}/weather
      */
     @Override
@@ -270,17 +276,19 @@ public class GarminDownloader implements ActivityDownloader {
         User currentUser = UserService.getCurrentUser();
         BrowserContext context = currentUser.getBrowserContext();
         if (context == null) {
-            context = browser.newContext(new Browser.NewContextOptions().setStorageState(currentUser.getBrowserState()));
+            context =
+                    browser.newContext(new Browser.NewContextOptions().setStorageState(currentUser.getBrowserState()));
             UserService.getCurrentUser().setBrowserContext(context);
         }
-        APIResponse response = context.request().get(GARMIN_ACTIVITY_SERVICE_URL + id.toString() + "/weather", RequestOptions.create()
-                .setHeader("authorization", "Bearer " + this.access_token)
-                .setHeader("di-backend", "connectapi.garmin.com")
-                .setHeader("dnt", "1")
-                .setHeader("nk", "NT")
-                .setHeader("referer", "https://connect.garmin.com/modern/activity/" + id)
-                .setHeader("x-app-ver", "4.66.1.1")
-        );
+        APIResponse response = context.request()
+                .get(GARMIN_ACTIVITY_SERVICE_URL + id.toString() + "/weather", RequestOptions.create()
+                        .setHeader("authorization", "Bearer " + this.access_token)
+                        .setHeader("di-backend", "connectapi.garmin.com")
+                        .setHeader("dnt", "1")
+                        .setHeader("nk", "NT")
+                        .setHeader("referer", "https://connect.garmin.com/modern/activity/" + id)
+                        .setHeader("x-app-ver", "4.66.1.1")
+                );
 
         if (!response.ok()) {
             throw new RuntimeException(response.statusText() + "couldn't download activity file");

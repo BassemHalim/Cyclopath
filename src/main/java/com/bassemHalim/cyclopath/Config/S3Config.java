@@ -24,12 +24,11 @@ public class S3Config {
 
     @Bean
     public S3Client s3client() {
-        S3Client client = S3Client.builder()
+        return S3Client.builder()
                 .region(region)
                 .credentialsProvider(
                         credentials())
                 .build();
-        return client;
     }
 
     @Bean

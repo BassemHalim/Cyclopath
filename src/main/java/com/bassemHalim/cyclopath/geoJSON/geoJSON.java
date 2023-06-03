@@ -27,7 +27,7 @@ public class geoJSON extends JSONObject {
     /**
      * convert a string in gpx format to a json object
      *
-     * @param gpx
+     * @param gpx activity in GPX string format
      * @return
      */
     public geoJSON fromGPX(String gpx) {

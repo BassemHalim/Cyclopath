@@ -156,8 +156,7 @@ public class SingleTableDB {
                         .withExpressionAttributeValues(attributeValueMap);
 
         QueryResultPage<Activity> queryPage = dynamoDBMapper.queryPage(Activity.class, queryExpression, DynamoDBMapperConfig.builder().build());
-        List<Activity> activityList = queryPage.getResults();
-        return activityList;
+        return queryPage.getResults();
     }
 
 
@@ -191,9 +190,9 @@ public class SingleTableDB {
     }
 
     /**
-     * tries to retires activities metadata, if not found it creates a new one w/o saving it to DB
+     * tries to fetch activities metadata from db, if not found it creates a new one w/o saving it to DB
      *
-     * @param UUID
+     * @param UUID user UUID
      * @return ActivitiesMetadata is found else null
      */
     public ActivitiesMetatdata getActivityMetadata(String UUID) {
@@ -280,8 +279,6 @@ public class SingleTableDB {
 
     /**
      * used to update all activities CK to left pad with 0 ex: ACTIVITY#8154485949 to ACTIVITY#08154485949
-     *
-     * @return
      */
     public void updateRouteCompositeKeys(String UUID) {
         Map<String, AttributeValue> attributeValueMap = new HashMap<>();

@@ -29,9 +29,6 @@ public class MapController {
         Route route = mapService.getRoute(id);
         RouteDTO dto = RouteMapper.MAPPER.toDTO(route);
         String json = new String(Compressor.decompress(dto.geoJSON_zip));
-        System.out.println(json);
         return ResponseEntity.ok(dto);
     }
-
-
 }

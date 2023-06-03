@@ -32,7 +32,7 @@ public class Activity {
     @DynamoDBAttribute(attributeName = "avgSpeed")
     private double averageSpeed;
     //    @DynamoDBAttribute(attributeName = "start")
-//    private long beginTimestamp;
+    //    private long beginTimestamp;
     private double bmrCalories;
     private double calories;
     //    private long deviceId;
@@ -46,10 +46,8 @@ public class Activity {
     private double endLatitude;
     @DynamoDBAttribute(attributeName = "endLon")
     private double endLongitude;
-    //    private boolean favorite;
     private boolean hasPolyline;
     private boolean hasSplits;
-    //    private boolean hasVideo;
     private int lapCount;
     private String locationName;
     private boolean manualActivity;
@@ -61,16 +59,7 @@ public class Activity {
     private double minActivityLapDuration;
     private double minElevation;
     private double movingDuration;
-    //    private String ownerDisplayName;
-//    private String ownerFullName;
     private int ownerId;
-    //    public String ownerProfileImageUrlLarge;
-//    public String ownerProfileImageUrlMedium;
-//    public String ownerProfileImageUrlSmall;
-//    public boolean parent;
-//    public boolean pr;
-//    public boolean purposeful;
-//    private int sportTypeId;
     @DynamoDBAttribute(attributeName = "startLat")
     private double startLatitude;
     @DynamoDBAttribute(attributeName = "startLon")
@@ -78,7 +67,6 @@ public class Activity {
     private String startTimeGMT;
     private String startTimeLocal;
     private int timeZoneId;
-    //    public boolean userPro;
     private double waterEstimated;
     private byte[] geoJSON_gzip;
     private Weather weather;
@@ -100,7 +88,9 @@ public class Activity {
     @DynamoDBHashKey(attributeName = "CyclopathPK")
     public String getOwnerUUID() {
         if (ownerUUID == null) {
-            ownerUUID = ((User) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
+            ownerUUID = ((User) SecurityContextHolder.getContext()
+                    .getAuthentication()
+                    .getPrincipal()).getId();
         }
         return ownerUUID;
     }
