@@ -4,6 +4,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.*;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ExpectedAttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughputExceededException;
+import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 import com.bassemHalim.cyclopath.Activity.ActivitiesMetatdata;
 import com.bassemHalim.cyclopath.Activity.Activity;
 import com.bassemHalim.cyclopath.Map.Route;
@@ -161,7 +162,11 @@ public class SingleTableDB {
 
 
     public Activity getActivity(String PK, CompositeKey SK) {
-        return dynamoDBMapper.load(Activity.class, PK, SK);
+        try {
+            return dynamoDBMapper.load(Activity.class, PK, SK);
+        } catch (Exception e) {
+            throw new ResourceNotFoundException("Activity not found");
+        }
     }
 
     public void deleteActivity(String PK, CompositeKey SK) {
@@ -172,7 +177,7 @@ public class SingleTableDB {
 
 
     public void updateActivity(Long ID, Activity activity) {
-        // @TODO fix this
+        // @fixme
         dynamoDBMapper.save(activity,
                 new DynamoDBSaveExpression()
                         .withExpectedEntry("activityID",

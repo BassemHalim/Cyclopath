@@ -49,27 +49,16 @@ public class MapService {
      * @return URL to the image
      */
     public Optional<HttpUrl> getMap(long activityID) {
-        //@TODO change logic to get image from s3
         log.info("getting map");
         // check if in S3
         String key = UserService.getCurrentUser().getId() + String.format("#%012d", activityID);
         if (mapRepository.objectExists(key)) {
             return Optional.of(mapRepository.generatePresignedUrl(key).orElseThrow());
-//            byte[] data = mapRepository.getObject(key).orElseThrow();
-//            ByteArrayInputStream bis = new ByteArrayInputStream(data);
-//            try {
-//                BufferedImage bImage2 = ImageIO.read(bis);
-//                ImageIO.write(bImage2, "png", new File("/mnt/projects/BikeApp/cyclopath/activities_samples/output.png"));
-//
-//            } catch (Exception e) {
-//                log.info(e.getMessage());
-//            }
         }
         // if not in S3 get route
         Route route = getRoute(activityID);
         HttpUrl url = generateMap(route).orElseThrow();
         return Optional.of(url);
-
     }
 
     /**
@@ -112,8 +101,6 @@ public class MapService {
             ImageIO.write(map, "png", bos);
             byte[] data = bos.toByteArray();
             mapRepository.putObject(key, data);
-
-//            ImageIO.write(image, "png", new File("/mnt/projects/BikeApp/cyclopath/activities_samples/image.png"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

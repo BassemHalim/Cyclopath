@@ -5,11 +5,12 @@ import com.bassemHalim.cyclopath.Activity.ActivityDownloader.GarminActivityDTO.G
 import com.bassemHalim.cyclopath.Activity.ActivityDownloader.GarminActivityListItemDTO.ActivityListItemDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;
 
 import java.util.List;
 
-@Mapper
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface ActivityMapper {
 
     ActivityMapper MAPPER = Mappers.getMapper(ActivityMapper.class);

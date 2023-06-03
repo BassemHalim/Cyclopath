@@ -26,45 +26,40 @@ public class ActivityService {
     private ActivityDownloader garminDownloader;
     @Autowired
     private SingleTableDB repository;
-
-
     private final int MAX_USER_ACTIVITIES = 1000;
 
     /**
      * Download activities from garmin and saveUser them to dynamo
      * returns list of activities metadata (w/o route)
      */
-    private List<ActivityDTO> syncActivities(int start, int limit) {
+    public List<ActivityDTO> syncActivities(int start, int limit) {
         List<ActivityListItemDTO> garminActivityList = garminDownloader.getActivitiesList(start, limit);
         ActivitiesMetatdata savedActivities = getActivitiesMetatdata();
-
         if (savedActivities != null && savedActivities.getSavedActivities().size() == garminActivityList.size()) {
             // up to date
             return ActivityMapper.MAPPER.ActivityListItemDTOtoDTOList(garminActivityList);
         }
 
-        List<Activity> downloaded = new ArrayList<>();
+        List<Activity> downloaded = new LinkedList<>();
         List<Long> inRepo = savedActivities.getSavedActivities();
         // need to update the list of activities and download the new ones
         for (ActivityListItemDTO activity : garminActivityList) {
             Long ActivityID = activity.getActivityId();
             if (!inRepo.contains(ActivityID)) {
                 Activity garminActivity = garminDownloader.getActivity(ActivityID);
-                byte[] route = garminDownloader.getActivityRoute(ActivityID);
-                garminActivity.setGeoJSON_gzip(route);
+                garminActivity.setWeather(garminDownloader.getActivityWeather(ActivityID));
                 downloaded.add(garminActivity);
                 try {
-                    Thread.sleep(600 + (long) (Math.random() * 100));
+                    // to not spam the garmin server
+                    Thread.sleep(100 + (long) (Math.random() * 100));
                 } catch (InterruptedException ex) {
                     log.severe("thread sleep error" + ex.toString());
                 }
             }
-            savedActivities.addActivity(ActivityID);
+            savedActivities.addActivity(ActivityID); // @fixme will be too big the first time
         }
         // update the activity list in the DB
-
         repository.batchSaveActivities(downloaded);
-
         repository.saveActivitiesMetadata(savedActivities);
         return ActivityMapper.MAPPER.ActivityListItemDTOtoDTOList(garminActivityList);
     }
@@ -75,14 +70,11 @@ public class ActivityService {
         if (savedActivities == null) {
             savedActivities = new ActivitiesMetatdata();
             savedActivities.setUUID(UUID);
-
         }
         return savedActivities;
     }
 
-
     public List<ActivityDTO> getActivityList(@NotNull @Positive int start, @NotNull @Positive int limit) {
-//        syncActivities(start, limit);
 
         List<Activity> activityList = repository.batchGetActivity(limit, UserService.getCurrentUser().getId());
         List<Activity> toBeSaved = new ArrayList<>(limit);
@@ -112,9 +104,6 @@ public class ActivityService {
         repository.batchSaveActivities(toBeSaved);
         repository.batchSaveRoute(routesToBeSave);
         return ActivityMapper.MAPPER.ActivitytoDTOList(activityList);
-//        List<ActivityDTO> activityDTOS = syncActivities(start, limit);
-//        activityDTOS.stream().forEach(s -> System.out.println(s.getActivityId()));
-//        return activityDTOS;
     }
 
     /**
@@ -131,9 +120,9 @@ public class ActivityService {
         ActivitiesMetatdata activitiesMetatdata = getActivitiesMetatdata();
         if (activitiesMetatdata.getSavedActivities().contains(ID)) {
             // it's in the DB
-            Activity activity = repository.getActivity(UUID, new CompositeKey("ACTIVITY", Activity.getCompositeKeyPostfix(ID))); //@TODO handle migration
+            Activity activity = repository.getActivity(UUID, new CompositeKey("ACTIVITY", Activity.getCompositeKeyPostfix(ID)));
             if (activity.getGeoJSON_gzip() != null) {
-                // @TODO change later
+                // @TODO change later after migration to new table scheme
                 Route route = Route.builder()
                         .geoJSON_zip(activity.getGeoJSON_gzip())
                         .activityID(ID)
@@ -146,12 +135,11 @@ public class ActivityService {
             }
             return ActivityMapper.MAPPER.toDTO(activity);
         }
+
         // need to update the list of activities and download the new ones
         syncActivities(0, MAX_USER_ACTIVITIES);
-        // Activity should now be in DB
-
+        // Activity should now be in DB if not throw error
         Activity activity = repository.getActivity(UUID, new CompositeKey("ACTIVITY", ID.toString()));
-
         return ActivityMapper.MAPPER.toDTO(activity);
     }
 
@@ -165,18 +153,12 @@ public class ActivityService {
         repository.deleteActivity(UUID, new CompositeKey("ACTIVITY", ID.toString()));
     }
 
-
-//    public void updateSortKeys() {
-////        repository.updateActivityCompositeKeys(UserService.getCurrentUser().getId());
-//        repository.updateRouteCompositeKeys(UserService.getCurrentUser().getId());
-//    }
-
     public Boolean activityExists(@NotNull @Positive Long ID) {
         ActivitiesMetatdata activitiesMetatdata = getActivitiesMetatdata();
         if (activitiesMetatdata.hasActivity(ID)) {
             return true;
         }
-        List<ActivityListItemDTO> activityListItemDTOS = garminDownloader.getActivitiesList(0, 1000); // @fixme macro
+        List<ActivityListItemDTO> activityListItemDTOS = garminDownloader.getActivitiesList(0, MAX_USER_ACTIVITIES); // @fixme change to fetch all
         return activityListItemDTOS.stream().anyMatch(a -> a.getActivityId() == ID);
     }
 }
