@@ -32,8 +32,8 @@ public class ActivityService {
      * Download activities from garmin and saveUser them to dynamo
      * returns list of activities metadata (w/o route)
      */
-    public List<ActivityDTO> syncActivities(int start, int limit) {
-        List<ActivityListItemDTO> garminActivityList = garminDownloader.getActivitiesList(start, limit);
+    private List<ActivityDTO> syncActivities() {
+        List<ActivityListItemDTO> garminActivityList = garminDownloader.getActivitiesList(0, MAX_USER_ACTIVITIES); //@fixme
         ActivitiesMetatdata savedActivities = getActivitiesMetatdata();
         if (savedActivities != null && savedActivities.getSavedActivities().size() == garminActivityList.size()) {
             // up to date
@@ -74,8 +74,10 @@ public class ActivityService {
         return savedActivities;
     }
 
-    public List<ActivityDTO> getActivityList(@NotNull @Positive int start, @NotNull @Positive int limit) {
-
+    public List<ActivityDTO> getActivityList(@NotNull @Positive int start, @NotNull @Positive int limit, boolean sync) {
+        if (sync) {
+            syncActivities();
+        }
         List<Activity> activityList = repository.batchGetActivity(limit, UserService.getCurrentUser().getId());
         List<Activity> toBeSaved = new ArrayList<>(limit);
         List<Route> routesToBeSave = new LinkedList<>();
@@ -137,7 +139,7 @@ public class ActivityService {
         }
 
         // need to update the list of activities and download the new ones
-        syncActivities(0, MAX_USER_ACTIVITIES);
+        syncActivities();
         // Activity should now be in DB if not throw error
         Activity activity = repository.getActivity(UUID, new CompositeKey("ACTIVITY", ID.toString()));
         return ActivityMapper.MAPPER.toDTO(activity);

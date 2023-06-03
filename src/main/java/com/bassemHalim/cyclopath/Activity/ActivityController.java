@@ -17,8 +17,10 @@ public class ActivityController {
     @GetMapping("/activity-list")
     ResponseEntity<List<ActivityDTO>> getActivityList(
             @RequestParam(required = false, defaultValue = "20") int limit,
-            @RequestParam(required = false, defaultValue = "0") int start) {
-        List<ActivityDTO> activityList = activityService.getActivityList(start, limit);
+            @RequestParam(required = false, defaultValue = "0") int start,
+            @RequestParam(required = false, defaultValue = "false") boolean GarminSync
+    ) {
+        List<ActivityDTO> activityList = activityService.getActivityList(start, limit, GarminSync);
         return ResponseEntity.ok(activityList);
     }
 
