@@ -34,7 +34,7 @@ public class ActivityService {
         List<ActivityListItemDTO> garminActivityList =
                 garminDownloader.getActivitiesList(
                         0,
-                        MAX_USER_ACTIVITIES); //@fixme
+                        MAX_USER_ACTIVITIES);
         ActivitiesMetatdata savedActivities = getActivitiesMetatdata();
         if (savedActivities != null && savedActivities.getSavedActivities()
                 .size() == garminActivityList.size()) {
@@ -60,9 +60,9 @@ public class ActivityService {
                 } catch (InterruptedException ex) {
                     log.severe("thread sleep error" + ex);
                 }
+                // will be big the first time
+                savedActivities.addActivity(ActivityMapper.MAPPER.toDTO(activity));
             }
-            savedActivities.addActivity(ActivityID); // @fixme will be too
-            // big the first time
         }
         // update the activity list in the DB
         repository.batchSaveActivities(downloaded);
@@ -80,6 +80,11 @@ public class ActivityService {
             savedActivities.setUUID(UUID);
         }
         return savedActivities;
+    }
+
+    public List<Double> getDistanceHistory() {
+        ActivitiesMetatdata metatdata = getActivitiesMetatdata();
+        return metatdata.getYearlyHistory();
     }
 
     public List<ActivityDTO> getActivityList(@NotNull @Positive int start,

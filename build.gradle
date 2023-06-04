@@ -73,7 +73,6 @@ dependencies {
 group = 'com.bassemHalim'
 version = '0.0.1-SNAPSHOT'
 description = 'cyclopath'
-sourceCompatibility = '17'
 
 publishing {
     publications {

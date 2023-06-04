@@ -24,6 +24,10 @@ public class ActivityController {
         return ResponseEntity.ok(activityList);
     }
 
+    @GetMapping("/stats")
+    ResponseEntity<List<Double>> getStats() {
+        return ResponseEntity.ok(activityService.getDistanceHistory());
+    }
 
     @GetMapping("/{id}")
     ResponseEntity<ActivityDTO> getActivity(@PathVariable Long id) {

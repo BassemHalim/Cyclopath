@@ -37,7 +37,6 @@ build/
 .vscode/
 
 .gradle
-build/
 .mvn/
 mvnw
 mvnw.cmd
