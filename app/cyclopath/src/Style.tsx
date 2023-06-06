@@ -12,7 +12,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 30,
     fontWeight: "bold",
-    margin: 10,
   },
   text: {
     color: "#e4e6eb",
@@ -50,6 +49,7 @@ const styles = StyleSheet.create({
     borderColor: "#fff",
     margin: 5,
     flex: 1,
+    maxHeight: 300,
   },
   logo: {
     width: "80%",
@@ -67,6 +67,11 @@ const styles = StyleSheet.create({
     margin: 5,
     marginHorizontal: 10,
     backgroundColor: "#242526",
+  },
+  activityTitle: {
+    justifyContent: "space-around",
+    alignItems: "center",
+    flex: 1,
   },
   activityStat: {
     flex: 1,

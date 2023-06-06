@@ -8,7 +8,7 @@ export const RegularText: React.FC<TextProps> = ({
   ...props
 }) => {
   return (
-    <View style={[{ justifyContent: "space-around", alignItems: "center", flex: 1}, style]}>
+    <View style={[style]}>
       <Text style={[styles.text]} {...props}>
         {children}
       </Text>

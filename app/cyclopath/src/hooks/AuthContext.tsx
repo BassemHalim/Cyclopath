@@ -26,20 +26,3 @@ export const UserProvider = ({ children }: AuthProviderProps) => {
     </UserContext.Provider>
   );
 };
-
-//   const logout = () => {
-//     ["token", "name"].forEach((obj) => removeCookie(obj)); // remove data save in cookies
-//     navigate("/login");
-//   };
-
-//   const value = useMemo(
-//     () => ({
-//       cookies,
-//       login,
-//       logout,
-//     }),
-//     [cookies]
-//   );
-
-//   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
-// };

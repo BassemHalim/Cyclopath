@@ -41,7 +41,6 @@ public class User implements UserDetails {
     }
 
     @DynamoDBIgnore
-    @Builder.Default
     private String CyclopathSK = "PROFILE";
     private String Id;
 

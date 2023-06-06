@@ -12,7 +12,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React from "react";
 import { styles } from "../Style";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-// import { Props } from "../types";
 import { StackParamList } from "../../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RegularText } from "../components/CustomText";
@@ -32,7 +31,6 @@ export default function SignIn({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  // const [token, setToken] = useState<string>("");
   const { token, setToken } = useAuth();
 
   useEffect(() => {
@@ -49,7 +47,6 @@ export default function SignIn({ navigation }: Props) {
   }, [token]);
 
   const onSignin = () => {
-    //@TODO handle signup
     if (!email || !password) {
       Alert.alert("please enter credentials");
       return;
@@ -74,6 +71,7 @@ export default function SignIn({ navigation }: Props) {
       .then((data) => {
         if (!data.token) {
           Alert.alert("credentials incorrect");
+          console.log(data);
           return;
         }
         storeToken(data.token);
@@ -99,14 +97,18 @@ export default function SignIn({ navigation }: Props) {
         style={styles.logo}
       ></Image>
       <View style={styles.loginForm}>
-        <RegularText> username</RegularText>
+        <RegularText style={{ maxHeight: 20, alignSelf: "flex-start" }}>
+          username
+        </RegularText>
         <TextInput
           inputMode="email"
           style={styles.inputBox}
           placeholder="  name@email.com"
           onChangeText={(email) => setEmail(email)}
         ></TextInput>
-        <RegularText> password</RegularText>
+        <RegularText style={{ maxHeight: 20, alignSelf: "flex-start" }}>
+          password
+        </RegularText>
         <TextInput
           secureTextEntry={true}
           style={styles.inputBox}

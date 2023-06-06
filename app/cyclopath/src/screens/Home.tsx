@@ -1,5 +1,10 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
-import { View, RefreshControl, StatusBar } from "react-native";
+import {
+  View,
+  RefreshControl,
+  StatusBar,
+  ActivityIndicator,
+} from "react-native";
 // import { Props } from "../types";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { StackParamList } from "../../App";
@@ -8,12 +13,14 @@ import Activity, { Convert } from "../components/Activity";
 import { ActivityDTO } from "../types";
 import { styles } from "../Style";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { RegularText } from "../components/CustomText";
 import { useAuth } from "../hooks/AuthContext";
 const activityListURL: string =
   "http://192.168.1.245:8080/activity/activity-list?limit=10";
 
-async function getActivityList(token: string): Promise<ActivityDTO[] | null> {
+async function getActivityList(
+  token: string,
+  garminSync: boolean
+): Promise<ActivityDTO[] | null> {
   if (token == "") return null;
   //@TODO handle expired token
   var myHeaders = new Headers();
@@ -25,14 +32,17 @@ async function getActivityList(token: string): Promise<ActivityDTO[] | null> {
   };
 
   try {
-    const json: string = await fetch(activityListURL, requestOptions).then(
-      function (response) {
-        if (!response.ok) {
-          throw Error(response.statusText);
-        }
-        return response.text();
+    const url = garminSync
+      ? activityListURL + "&GarminSync=true"
+      : activityListURL;
+    const json: string = await fetch(url, requestOptions).then(function (
+      response
+    ) {
+      if (!response.ok) {
+        throw Error(response.statusText);
       }
-    );
+      return response.text();
+    });
     // handle error
 
     const activityList: ActivityDTO[] = Convert.toActivity(json);
@@ -54,9 +64,12 @@ const Home: React.FC<Props> = (props: Props) => {
   }
   const [activitites, setActivities] = useState<ActivityDTO[]>([]);
 
-  const fetchData = async () => {
+  const fetchData = async (garminSync: Boolean) => {
     if (token) {
-      let activityLst: ActivityDTO[] | null = await getActivityList(token);
+      let activityLst: ActivityDTO[] | null = await getActivityList(
+        token,
+        garminSync
+      );
       if (activityLst) {
         setActivities(activityLst);
       }
@@ -67,13 +80,13 @@ const Home: React.FC<Props> = (props: Props) => {
   useEffect(() => {
     // handle infinite loop
     if (token) {
-      fetchData();
+      fetchData(false);
     }
   }, [token]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchData();
+    await fetchData(true);
     setRefreshing(false);
   }, []);
 
@@ -87,7 +100,7 @@ const Home: React.FC<Props> = (props: Props) => {
         },
       ]}
     >
-      <StatusBar translucent={true} />
+      <StatusBar translucent={true} hidden={false} />
       <ScrollView
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

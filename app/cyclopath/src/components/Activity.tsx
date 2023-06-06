@@ -80,8 +80,12 @@ export default function Activity(props: { DTO: ActivityDTO; key: number }) {
     <View style={styles.activityStats}>
       <View style={{ flex: 1 }}>
         <View style={styles.activityStatsRow}>
-          <RegularText>{DTO.activityName}</RegularText>
-          <RegularText> {formatDate(date)} </RegularText>
+          <RegularText style={styles.activityTitle}>
+            {DTO.activityName}
+          </RegularText>
+          <RegularText style={styles.activityTitle}>
+            {formatDate(date)}
+          </RegularText>
         </View>
         <View style={styles.activityStatsRow}>
           <Stat
@@ -105,8 +109,11 @@ export default function Activity(props: { DTO: ActivityDTO; key: number }) {
           <Stat title="Calories" value={DTO.calories} units="" />
           <Stat title="Temperature" value={DTO.weather.temp} units="f" />
           <Stat title="Wind speed" value={DTO.weather.windSpeed} units="mph" />
-          <Stat title="Wind dir." value={DTO.weather.windDirectionCompassPoint} units="" />
-
+          <Stat
+            title="Wind dir."
+            value={DTO.weather.windDirectionCompassPoint}
+            units=""
+          />
         </View>
       </View>
 
