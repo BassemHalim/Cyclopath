@@ -4,27 +4,24 @@ import { useAuth } from "../hooks/AuthContext";
 
 import { styles } from "../Style";
 // import { Props } from "../types";
-import { StackParamList } from "../../App";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RegularText } from "../components/CustomText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { storeToken } from "./signIn";
+import { useNavigate } from "react-router-native";
 
 const registerURL = "http://192.168.1.245:8080/auth/register";
 
-type Props = NativeStackScreenProps<StackParamList, "SignUp">;
-
-export default function SignUp({ route, navigation }: Props) {
+export default function SignUp() {
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [password1, setPassword1] = useState("");
   const [password2, setPassword2] = useState("");
-
+  const navigate = useNavigate();
   const { token, setToken } = useAuth();
 
   const onSignUp = () => {
     if (!email || !password1 || !password2) {
-      console.log(email, password1, password2)
+      console.log(email, password1, password2);
       Alert.alert("please fill all fields");
       return;
     }
@@ -57,7 +54,7 @@ export default function SignUp({ route, navigation }: Props) {
         }
         storeToken(data.token);
         setToken(data.token);
-        navigation.navigate("Home");
+        navigate("/");
       })
       .catch((error) => console.log("error", error));
   };

@@ -1,21 +1,20 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
-import {
-  View,
-  RefreshControl,
-  StatusBar,
-  ActivityIndicator,
-} from "react-native";
-// import { Props } from "../types";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { StackParamList } from "../../App";
+import { View, RefreshControl, ActivityIndicator } from "react-native";
+import { Navigate } from "react-router";
 import { ScrollView } from "react-native-gesture-handler";
 import Activity, { Convert } from "../components/Activity";
 import { ActivityDTO } from "../types";
 import { styles } from "../Style";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 import { useAuth } from "../hooks/AuthContext";
+
 const activityListURL: string =
-  "http://192.168.1.245:8080/activity/activity-list?limit=10";
+  "http://192.168.1.245:8080/activity/activity-list?limit=2";
 
 async function getActivityList(
   token: string,
@@ -53,18 +52,16 @@ async function getActivityList(
   return null;
 }
 
-type Props = NativeStackScreenProps<StackParamList, "Home">;
-
-const Home: React.FC<Props> = (props: Props) => {
+export default function Home() {
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
   const { token, setToken } = useAuth();
   if (!token) {
-    props.navigation.navigate("SignIn");
+    return <Navigate to="/signin" replace />;
   }
   const [activitites, setActivities] = useState<ActivityDTO[]>([]);
 
-  const fetchData = async (garminSync: Boolean) => {
+  const fetchData = async (garminSync: boolean) => {
     if (token) {
       let activityLst: ActivityDTO[] | null = await getActivityList(
         token,
@@ -112,5 +109,4 @@ const Home: React.FC<Props> = (props: Props) => {
       </ScrollView>
     </View>
   );
-};
-export default Home;
+}

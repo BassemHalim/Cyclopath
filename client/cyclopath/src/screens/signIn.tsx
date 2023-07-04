@@ -2,9 +2,9 @@ import {
   Button,
   Image,
   StyleSheet,
-  Text,
   TextInput,
   View,
+  Text,
   Alert,
 } from "react-native";
 import { useEffect, useState } from "react";
@@ -12,14 +12,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React from "react";
 import { styles } from "../Style";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { StackParamList } from "../../App";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RegularText } from "../components/CustomText";
 import { useAuth } from "../hooks/AuthContext";
+import { Link, useNavigate } from "react-router-native";
 
 const loginURL = "http://192.168.1.245:8080/auth/authenticate";
-
-type Props = NativeStackScreenProps<StackParamList, "SignIn">;
 
 export const storeToken = (value: string) => {
   AsyncStorage.setItem("access_token", value)
@@ -27,12 +24,12 @@ export const storeToken = (value: string) => {
     .catch((e) => console.error(e));
 };
 
-export default function SignIn({ navigation }: Props) {
+export default function SignIn() {
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { token, setToken } = useAuth();
-
+  const navigate = useNavigate();
   useEffect(() => {
     if (!token) {
       const fetchData = async () => {
@@ -42,7 +39,7 @@ export default function SignIn({ navigation }: Props) {
       fetchData();
     }
     if (token) {
-      navigation.navigate("Home");
+      navigate("/");
     }
   }, [token]);
 
@@ -76,7 +73,7 @@ export default function SignIn({ navigation }: Props) {
         }
         storeToken(data.token);
         setToken(data.token);
-        navigation.navigate("Home");
+        navigate("/");
       })
       .catch((error) => console.log("error", error));
   };
@@ -95,7 +92,7 @@ export default function SignIn({ navigation }: Props) {
         source={require("../../assets/media/logo.png")}
         resizeMode="contain"
         style={styles.logo}
-      ></Image>
+      />
       <View style={styles.loginForm}>
         <RegularText style={{ maxHeight: 20, alignSelf: "flex-start" }}>
           username
@@ -116,12 +113,11 @@ export default function SignIn({ navigation }: Props) {
           onChangeText={(password) => setPassword(password)}
         ></TextInput>
         <Button onPress={onSignin} title="sign in" />
-        <Text
-          style={styles.smallText}
-          onPress={() => navigation.navigate("SignUp")}
-        >
-          New here? Sign up
-        </Text>
+        <Link to="/signup">
+          <View>
+            <Text className="text-white">New here? Sign up</Text>
+          </View>
+        </Link>
       </View>
     </View>
   );
