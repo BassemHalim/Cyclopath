@@ -1,18 +1,14 @@
-import { Button, TextInput, View, Alert } from "react-native";
-import { useEffect, useState } from "react";
+import { TextInput, View, Alert, Pressable, Text } from "react-native";
+import { useState } from "react";
 import { useAuth } from "../hooks/AuthContext";
 
-import { styles } from "../Style";
-// import { Props } from "../types";
-import { RegularText } from "../components/CustomText";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { storeToken } from "./signIn";
 import { useNavigate } from "react-router-native";
 
 const registerURL = "http://192.168.1.245:8080/auth/register";
 
 export default function SignUp() {
-  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [password1, setPassword1] = useState("");
   const [password2, setPassword2] = useState("");
@@ -59,40 +55,36 @@ export default function SignUp() {
       .catch((error) => console.log("error", error));
   };
   return (
-    // <View style={styles.container}>
-    <View
-      style={[
-        styles.container,
-        {
-          paddingBottom: Math.max(insets.bottom, 16),
-          paddingTop: Math.max(insets.top, 16),
-        },
-      ]}
-    >
-      <View style={styles.loginForm}>
-        <RegularText> username</RegularText>
+    <SafeAreaView className="flex-1 flex-col items-center bg-black text-white justify-center">
+      <View className="flex flex-col w-auto">
+        <Text className="text-white text-lg"> Username</Text>
         <TextInput
           inputMode="email"
-          style={styles.inputBox}
+          className="bg-gray-300 rounded-xl m-1 p-1 px-1.5 w-72"
           placeholder="  name@email.com"
           onChangeText={(email) => setEmail(email)}
         ></TextInput>
-        <RegularText> password</RegularText>
+        <Text className="text-white text-lg"> Password</Text>
         <TextInput
           secureTextEntry={true}
-          style={styles.inputBox}
+          className="bg-gray-300 rounded-xl m-1 p-1 px-1.5 w-72"
           placeholder="  **********"
           onChangeText={(password) => setPassword1(password)}
         ></TextInput>
-        <RegularText> re-enter password</RegularText>
+        <Text className="text-white text-lg"> re-enter password</Text>
         <TextInput
           secureTextEntry={true}
-          style={styles.inputBox}
+          className="bg-gray-300 rounded-xl m-1 p-1 px-1.5 w-72"
           placeholder="  **********"
           onChangeText={(password) => setPassword2(password)}
         ></TextInput>
-        <Button onPress={() => onSignUp()} title="Sign Up" />
+        <Pressable
+          className="bg-blue-600 rounded-xl m-2 w-40 p-2 self-center"
+          onPress={onSignUp}
+        >
+          <Text className="text-white text-center">sign up</Text>
+        </Pressable>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }

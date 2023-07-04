@@ -1,18 +1,12 @@
-import {
-  Button,
-  Image,
-  StyleSheet,
-  TextInput,
-  View,
-  Text,
-  Alert,
-} from "react-native";
+import { Image, TextInput, View, Text, Alert, Pressable } from "react-native";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React from "react";
 import { styles } from "../Style";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { RegularText } from "../components/CustomText";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useAuth } from "../hooks/AuthContext";
 import { Link, useNavigate } from "react-router-native";
 
@@ -25,7 +19,6 @@ export const storeToken = (value: string) => {
 };
 
 export default function SignIn() {
-  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { token, setToken } = useAuth();
@@ -79,46 +72,41 @@ export default function SignIn() {
   };
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          paddingBottom: Math.max(insets.bottom, 16),
-          paddingTop: Math.max(insets.top, 16),
-        },
-      ]}
-    >
+    <SafeAreaView className="flex-1 flex-col items-center bg-black text-white justify-center">
       <Image
         source={require("../../assets/media/logo.png")}
         resizeMode="contain"
         style={styles.logo}
       />
-      <View style={styles.loginForm}>
-        <RegularText style={{ maxHeight: 20, alignSelf: "flex-start" }}>
-          username
-        </RegularText>
+      <View className="flex flex-col w-auto">
+        <Text className="ml-2 text-white text-lg">Username</Text>
         <TextInput
           inputMode="email"
-          style={styles.inputBox}
+          className="bg-gray-300 rounded-xl m-1 p-1 px-1.5 w-72"
           placeholder="  name@email.com"
           onChangeText={(email) => setEmail(email)}
         ></TextInput>
-        <RegularText style={{ maxHeight: 20, alignSelf: "flex-start" }}>
-          password
-        </RegularText>
+        <Text className="ml-2  text-white text-lg">Password</Text>
         <TextInput
           secureTextEntry={true}
-          style={styles.inputBox}
+          className="bg-gray-300 rounded-xl m-1 p-1 px-1.5 w-72"
           placeholder="  **********"
           onChangeText={(password) => setPassword(password)}
         ></TextInput>
-        <Button onPress={onSignin} title="sign in" />
+
+        <Pressable
+          className="bg-blue-600 rounded-xl m-2 w-40 p-2 self-center"
+          onPress={onSignin}
+        >
+          <Text className="text-white text-center">sign in</Text>
+        </Pressable>
+
         <Link to="/signup">
           <View>
-            <Text className="text-white">New here? Sign up</Text>
+            <Text className="text-white m-2">New here? create account</Text>
           </View>
         </Link>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }

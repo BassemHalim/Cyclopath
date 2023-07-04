@@ -37,14 +37,6 @@ const styles = StyleSheet.create({
     fontFamily: "Roboto",
     textAlign: "center",
   },
-  inputBox: {
-    color: "#fff",
-    backgroundColor: "grey",
-    fontSize: 15,
-    width: 300,
-    marginVertical: 10,
-    borderRadius: 7,
-  },
   loginForm: {
     borderColor: "#fff",
     margin: 5,
