@@ -1,8 +1,8 @@
 # Cyclopath
 
-<img src="./app/cyclopath/assets/media/logo.png" style="margin:auto; display:block"   />
+<img src="./client/cyclopath/assets/media/logo.png" style="margin:auto; display:block"   />
 
-__Definition:__
+**Definition:**
 
 Cycopath: A person suffering from chronic bike riding disorder with abnormal urges to ride and feel free
 
@@ -11,21 +11,25 @@ Cycopath: A person suffering from chronic bike riding disorder with abnormal urg
 - a workout app that focuses on cycling. The app is meant to combine multiple features from existing
   apps into a single app.
 - This is a work in progress project with the following goal features
-    - __main features:__
-        - [x] Sync activities from Garmin Connect
-        - [x] Display weather info for every activity especially wind direction and speed
-        - [x] Display the workout static map
-        - [ ] Monitor and display user progress over time  (in progress)
+  - **main features:**
+    - [x] Sync activities from Garmin Connect
+    - [x] Display weather info for every activity especially wind direction and speed
+    - [x] Display the workout static map
+    - [ ] Monitor and display user progress over time (in progress)
           ![img.png](img.png)
-        - [ ] plan and save routes using maps and weather forecast
-    - __Nice-to-have features:__
-        - [ ] record activities from within app
-        - [ ] add pictures to activities
-        - [ ] personal heatmap with a game aspect to explore your city
-        - [ ] make maps interactive
-        - [ ] overlay speed or Heart Rate on map
+    - [ ] plan and save routes using maps and weather forecast
+  - **Nice-to-have features:**
+    - [ ] record activities from within app
+    - [ ] add pictures to activities
+    - [ ] personal heatmap with a game aspect to explore your city
+    - [ ] make maps interactive
+    - [ ] overlay speed or Heart Rate on map
 
-<img src="./app/cyclopath/assets/media/screenshot.png" style="margin:auto; display:block"   />
+
+
+<div align=center>
+<img src="./client/cyclopath/assets/media/screenshot.png" height="600" />
+</div>
 
 ## API:
 
@@ -62,7 +66,7 @@ longest distance, number of activities, etc.
 ### Dynamo DB Single Table:
 
 | Primary Key | Sort Key    | Attributes                                                                                  |
-|-------------|-------------|---------------------------------------------------------------------------------------------|
+| ----------- | ----------- | ------------------------------------------------------------------------------------------- |
 | UserUUID    | PROFILE     | {Username:STRING, Email: STRING, Password:STRING, ID:LONG, weight:FLOAT, Hight(cm):INT,...} |
 | UserUUID    | STATS       | {LongestRideID:LONG, numActivities:INT, ...}                                                |
 | UserUUID    | ACTIVITY#ID | {Name, CreationTime, Distance, CaloriesBurned, Comments, weather:Weather}                   |
