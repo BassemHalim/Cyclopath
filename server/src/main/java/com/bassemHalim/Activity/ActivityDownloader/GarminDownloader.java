@@ -47,11 +47,14 @@ import java.util.List;
 @Log
 public class GarminDownloader implements ActivityDownloader {
 
+
+    //	https://connect.garmin.com/modern/proxy/download-service/export/gpx/activity/11338406041
     private static String GARMIN_BASE_URL = "https://connect.garmin.com";
     private static String GARMIN_SIGNIN_URL = GARMIN_BASE_URL + "/signin";
     private static String GARMIN_ACTIVITY_LIST_URL = GARMIN_BASE_URL + "/activitylist-service/activities/search" +
             "/activities";
-    private static String GARMIN_ACTIVITY_GPX_URL = GARMIN_BASE_URL + "/download-service/export/gpx/activity/";
+    private static String GARMIN_ACTIVITY_GPX_URL = GARMIN_BASE_URL + "/download-service/export/gpx" +
+            "/activity/";
     private static String GARMIN_ACTIVITY_SERVICE_URL = GARMIN_BASE_URL + "/activity-service/activity/";
     @Value("${Garmin.USERNAME}")
     @NotNull
@@ -179,7 +182,7 @@ public class GarminDownloader implements ActivityDownloader {
 
     @Override
     public Activity getActivity(@NotNull @Positive Long ID) {
-
+        // @TODO use this url https://connect.garmin.com/activity-service/activity/{ID}/details
         if (!tokenValid()) {
             if (!garminLogin()) {
                 throw new RuntimeException("failed to garminLogin");
@@ -194,7 +197,7 @@ public class GarminDownloader implements ActivityDownloader {
             UserService.getCurrentUser().setBrowserContext(context);
         }
         APIResponse response = context.request()
-                .get(GARMIN_ACTIVITY_SERVICE_URL + ID.toString(), RequestOptions.create()
+                .get(GARMIN_ACTIVITY_SERVICE_URL + ID, RequestOptions.create()
                         .setHeader("authorization", "Bearer " + this.access_token)
                         .setHeader("di-backend", "connectapi.garmin.com")
                         .setHeader("dnt", "1")
@@ -234,16 +237,17 @@ public class GarminDownloader implements ActivityDownloader {
                     browser.newContext(new Browser.NewContextOptions().setStorageState(currentUser.getBrowserState()));
             UserService.getCurrentUser().setBrowserContext(context);
         }
-        APIResponse response = context.request().get(GARMIN_ACTIVITY_GPX_URL + id.toString(), RequestOptions.create()
+        APIResponse response = context.request().get(GARMIN_ACTIVITY_GPX_URL + id, RequestOptions.create()
                 .setHeader("authorization", "Bearer " + this.access_token)
                 .setHeader("di-backend", "connectapi.garmin.com")
-                .setHeader("dnt", "1")
                 .setHeader("nk", "NT")
-                .setHeader("referer", "https://connect.garmin.com/modern/activity/" + id)
-                .setHeader("x-app-ver", "4.66.1.1")
+                .setHeader("referer", "https://connect.garmin" +
+                        ".com/modern/activity/" + id)
+                .setHeader("x-app-ver", "4.68.1.0")
         );
 
         if (!response.ok()) {
+            log.warning("failed to fetch activity route for " + id);
             throw new RuntimeException(response.statusText() + "couldn't download activity file");
         }
         String GPX = new String(response.body(), StandardCharsets.UTF_8);

@@ -1,0 +1,8 @@
+services:
+  cyclopath:
+    container_name: cyclopath
+    build: .
+    ports:
+      - 8080:8080
+#    volumes:
+#      - ./build/libs:/app

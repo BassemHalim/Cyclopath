@@ -112,7 +112,7 @@ public class MapService {
         if (!activityService.activityExists(ID)) throw new ResourceNotFoundException("didn't find activity");
         Route route = repository.getRoute(UUID, new CompositeKey("ROUTE", Long.toString(ID)));
         if (route == null) {
-            byte[] json = garminDownloader.getActivityRoute(ID);
+            byte[] json = garminDownloader.getActivityRoute(ID); // gets blocked sometimes
             route = Route.builder()
                     .activityID(ID)
                     .geoJSON_zip(json)
