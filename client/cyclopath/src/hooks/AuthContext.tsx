@@ -1,13 +1,40 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import { Alert } from "react-native";
+import * as SecureStore from "expo-secure-store";
+import axios from "axios";
+import jwt_decode from "jwt-decode";
+
+const LOGIN_URL = "http://192.168.1.245:8080/auth/authenticate";
+const REGISTER_URL = "http://192.168.1.245:8080/auth/register";
 
 export type User = {
-  token: string | null;
-  setToken: (t: string | null) => void;
+  isAuthenticated: boolean;
+  token: string;
+  login: (username: string, password: string) => Promise<void>;
+  register: (username: string, password: string) => Promise<void>;
+  logout: () => void;
 };
 
+async function saveToken(value) {
+  await SecureStore.setItemAsync("cyclopath_token", value);
+}
+
+async function getToken(): Promise<string | null> {
+  try {
+    let token = await SecureStore.getItemAsync("cyclopath_token");
+    return token;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+}
+
 const UserContext = createContext<User>({
-  token: null,
-  setToken: () => {},
+  isAuthenticated: false,
+  token: undefined,
+  login: undefined,
+  register: undefined,
+  logout: undefined,
 });
 
 export const useAuth = () => {
@@ -19,9 +46,76 @@ interface AuthProviderProps {
 }
 
 export const UserProvider = ({ children }: AuthProviderProps) => {
-  const [token, setToken] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [token, setToken] = useState<string>("");
+
+  useEffect(() => {
+    loadLocalStorage();
+  }, []);
+
+  const loadLocalStorage = async (): Promise<void> => {
+    getToken()
+      .then((token) => {
+        if (token) {
+          const { exp }: any = jwt_decode(token);
+          if (Date.now() / 1000 < exp) {
+            setIsAuthenticated(true);
+            setToken(token);
+          }
+        }
+      })
+      .catch((e) => console.log(e));
+  };
+
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await axios.post(LOGIN_URL, {
+        email: email,
+        password: password,
+      });
+      if (response.status === 200) {
+        const { token, username } = response.data;
+        setIsAuthenticated(true);
+        setToken(token);
+        await saveToken(token);
+      } else {
+        alert("invalid credentials");
+      }
+    } catch (error) {
+      console.log(error);
+      alert("internal error");
+    }
+  };
+
+  const register = async (email: string, password: string) => {
+    try {
+      const response = await axios.post(REGISTER_URL, {
+        email: email,
+        password: password,
+      });
+      if (response.status === 200) {
+        const { token, username } = response.data;
+        setIsAuthenticated(true);
+        setToken(token);
+        await saveToken(token);
+      } else {
+        alert("invalid credentials");
+      }
+    } catch (error) {
+      console.log(error);
+      alert("internal error");
+    }
+  };
+
+  const logout = () => {
+    setIsAuthenticated(false);
+    setToken("");
+  };
+
   return (
-    <UserContext.Provider value={{ token, setToken }}>
+    <UserContext.Provider
+      value={{ isAuthenticated, token, login, register, logout }}
+    >
       {children}
     </UserContext.Provider>
   );

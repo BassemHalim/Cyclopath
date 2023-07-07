@@ -16,4 +16,3 @@ export const RegularText: React.FC<TextProps> = ({
   );
 };
 
-// export default RegularText;

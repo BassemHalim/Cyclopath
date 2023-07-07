@@ -21,13 +21,13 @@ const formatDate = (date: Date): string => {
   let mm = date.getMonth() + 1; // Months start at 0!
   let dd = date.getDate();
 
-  const formattedToday = dd + "/" + mm + "/" + yyyy;
+  const formattedToday = mm + "/" + dd + "/" + yyyy;
   return formattedToday;
 };
 
-export default function Activity(props: { DTO: ActivityDTO; key: number }) {
+export default function Activity(props: { DTO: ActivityDTO }) {
   const [imageurl, setImageurl] = useState("../../assets/media/samplemap.png");
-  let { token, setToken } = useAuth();
+  let { token } = useAuth();
   let DTO = props.DTO;
   const distanceInMiles: number = DTO.distance / 1609;
   const durationInHours: number = DTO.duration / 3600;

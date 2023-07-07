@@ -3,57 +3,38 @@ import { useState } from "react";
 import { useAuth } from "../hooks/AuthContext";
 
 import { SafeAreaView } from "react-native-safe-area-context";
-import { storeToken } from "./signIn";
-import { useNavigate } from "react-router-native";
-
-const registerURL = "http://192.168.1.245:8080/auth/register";
+import { Navigate } from "react-router-native";
 
 export default function SignUp() {
   const [email, setEmail] = useState("");
   const [password1, setPassword1] = useState("");
   const [password2, setPassword2] = useState("");
-  const navigate = useNavigate();
-  const { token, setToken } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated, register } = useAuth();
 
-  const onSignUp = () => {
+  const handleSubmit = async () => {
+    const emailRegex =
+      /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
+
     if (!email || !password1 || !password2) {
-      console.log(email, password1, password2);
-      Alert.alert("please fill all fields");
+      setError("please fill all fields");
+      return;
+    }
+    if (!emailRegex.test(email)) {
+      setError("please enter a valid email");
       return;
     }
     if (password1 !== password2) {
-      Alert.alert("passwords don't match");
+      setError("passwords don't match");
       return;
     }
-    var myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
 
-    var raw = JSON.stringify({
-      email: email,
-      password: password1,
-    });
-
-    var requestOptions = {
-      method: "POST",
-      headers: myHeaders,
-      body: raw,
-      redirect: "follow",
-    };
-
-    fetch(registerURL, requestOptions)
-      .then((response) => response.json())
-      .then((data) => {
-        if (!data.token) {
-          Alert.alert("credentials incorrect");
-          console.log(data);
-          return;
-        }
-        storeToken(data.token);
-        setToken(data.token);
-        navigate("/");
-      })
-      .catch((error) => console.log("error", error));
+    await register(email, password1);
   };
+
+  if (isAuthenticated) {
+    return <Navigate to="/" />;
+  }
   return (
     <SafeAreaView className="flex-1 flex-col items-center bg-black text-white justify-center">
       <View className="flex flex-col w-auto">
@@ -78,9 +59,10 @@ export default function SignUp() {
           placeholder="  **********"
           onChangeText={(password) => setPassword2(password)}
         ></TextInput>
+        {error && <Text className="text-red-500 text-xs italic">{error}</Text>}
         <Pressable
           className="bg-blue-600 rounded-xl m-2 w-40 p-2 self-center"
-          onPress={onSignUp}
+          onPress={handleSubmit}
         >
           <Text className="text-white text-center">sign up</Text>
         </Pressable>
