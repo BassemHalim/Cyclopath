@@ -37,8 +37,8 @@ export default function Timeline() {
 
   return (
     <ScrollView horizontal>
-      <View className="flex flex-col flex-wrap h-28 m-1">
-        {Stats.slice(0, 365).map((item, index) => (
+      <View className="flex flex-col flex-wrap h-24 p-1 mb-2">
+        {Stats.map((item, index) => (
           <Day key={index} value={item} />
         ))}
       </View>

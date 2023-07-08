@@ -1,6 +1,5 @@
 import React from "react";
 import { Text, TextProps, View } from "react-native";
-import { styles } from "../Style";
 
 interface StatProps {
   title: string;
@@ -10,9 +9,9 @@ interface StatProps {
 
 export const Stat = ({ title, value, units }: StatProps) => {
   return (
-    <View style={styles.activityStat}>
-      <Text style={[styles.statTitle]}> {title} </Text>
-      <Text style={styles.statValue}>
+    <View className="flex flex-col items-center ">
+      <Text className="text-slate-400 font-semibold text-sm"> {title} </Text>
+      <Text className="text-slate-100  font-semibold text-base">
         {value} {units}
       </Text>
     </View>

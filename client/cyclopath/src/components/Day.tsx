@@ -7,7 +7,7 @@ export default function Day({ value }) {
 function getColor(value: number) {
   const decade = 16093; // 10 miles
   if (value <= decade) {
-    return "bg-white";
+    return "bg-gray-200";
   } else if (value <= 2 * decade) {
     return "bg-lime-200";
   } else if (value <= 3 * decade) {

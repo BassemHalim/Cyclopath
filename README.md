@@ -28,7 +28,7 @@ Cycopath: A person suffering from chronic bike riding disorder with abnormal urg
 
 
 <div align=center>
-<img src="./client/cyclopath/assets/media/screenshot.png" height="600" />
+<img src="sample.png" height="600" />
 </div>
 
 ## API:

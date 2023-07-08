@@ -1,7 +1,5 @@
 import { ActivityIndicator, Image, Text, View } from "react-native";
 import { ActivityDTO, Weather } from "../types";
-import { styles } from "../Style";
-import { RegularText } from "./CustomText";
 import { Suspense, useState, useEffect } from "react";
 import { useAuth } from "../hooks/AuthContext";
 import { Stat } from "./stat";
@@ -39,9 +37,6 @@ export default function Activity(props: { DTO: ActivityDTO }) {
 
   useEffect(() => {
     const fetchImageWithRedirect = async () => {
-      if (!token) {
-        return;
-      }
       try {
         var myHeaders = new Headers();
         myHeaders.append("Authorization", "Bearer " + token);
@@ -76,17 +71,17 @@ export default function Activity(props: { DTO: ActivityDTO }) {
   }, []);
 
   return (
-    <View style={styles.activityStats}>
-      <View style={{ flex: 1 }}>
-        <View style={styles.activityStatsRow}>
-          <RegularText style={styles.activityTitle}>
+    <View className="flex flex-col bg-gray-800 m-2 rounded-xl p-1 shadow-sm shadow-white">
+      <View className="divide-y divide-gray-400">
+        <View className="flex flex-row m-1 justify-around">
+          <Text className="text-slate-100 font-bold text-base">
             {DTO.activityName}
-          </RegularText>
-          <RegularText style={styles.activityTitle}>
+          </Text>
+          <Text className="text-slate-100 font-bold text-base">
             {formatDate(date)}
-          </RegularText>
+          </Text>
         </View>
-        <View style={styles.activityStatsRow}>
+        <View className="flex flex-row m-1 p-1 justify-around">
           <Stat
             title="Distance"
             value={distanceInMiles.toFixed(2)}
@@ -104,30 +99,24 @@ export default function Activity(props: { DTO: ActivityDTO }) {
             units="ft"
           />
         </View>
-        <View style={styles.activityStatsRow}>
+        <View className="flex flex-row m-1 p-1 justify-around">
           <Stat title="Calories" value={DTO.calories} units="" />
           <Stat title="Temperature" value={DTO.weather.temp} units="f" />
-          <Stat title="Wind speed" value={DTO.weather.windSpeed} units="mph" />
+          <Stat title="Wind Speed" value={DTO.weather.windSpeed} units="mph" />
           <Stat
-            title="Wind dir."
+            title="Wind Dir."
             value={DTO.weather.windDirectionCompassPoint}
             units=""
           />
         </View>
       </View>
 
-      <Suspense fallback={<ActivityIndicator />}>
-        <View style={{ flex: 2 }}>
-          <Image
-            // source={require("../../assets/media/samplemap.png")}
-            // resizeMode="center"
-            source={{
-              uri: imageurl,
-            }}
-            style={styles.activityMap}
-          />
-        </View>
-      </Suspense>
+      <Image
+        source={{
+          uri: imageurl,
+        }}
+        className="h-52 w-4/5 my-2 self-center rounded-xl"
+      />
     </View>
   );
 }

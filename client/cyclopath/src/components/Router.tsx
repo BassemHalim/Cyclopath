@@ -10,8 +10,6 @@ const Stack = createNativeStackNavigator();
 
 export default function Router() {
   const { isAuthenticated, token} = useAuth()
-  console.log(isAuthenticated)
-  console.log(token)
   return (
     <Stack.Navigator
       initialRouteName="signin"

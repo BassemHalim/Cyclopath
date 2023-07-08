@@ -1,7 +1,6 @@
 import { Image, TextInput, View, Text, Pressable } from "react-native";
 import { useEffect, useState } from "react";
 import React from "react";
-import { styles } from "../Style";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../hooks/AuthContext";
 
@@ -31,7 +30,7 @@ export default function SignIn({ navigation }) {
       <Image
         source={require("../../assets/media/logo.png")}
         resizeMode="contain"
-        style={styles.logo}
+        className="w-4/5 h-52 rounded-xl m-4"
       />
       <View className="flex flex-col w-auto">
         <Text className="ml-2 text-white text-lg">Username</Text>

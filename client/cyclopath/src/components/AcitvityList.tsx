@@ -2,13 +2,13 @@ import { useCallback, useEffect, useState } from "react";
 import { ActivityDTO } from "../types";
 
 import { ScrollView } from "react-native-gesture-handler";
-import { RefreshControl, FlatList } from "react-native";
+import { RefreshControl, FlatList, View } from "react-native";
 import Activity, { Convert } from "../components/Activity";
 import { useAuth } from "../hooks/AuthContext";
 import axios from "axios";
 
 const activityListURL: string =
-  "http://192.168.1.245:8080/activity/activity-list?limit=4";
+  "http://192.168.1.245:8080/activity/activity-list?limit=3";
 
 export default function AcitvityList() {
   const [refreshing, setRefreshing] = useState(false);
@@ -55,14 +55,15 @@ export default function AcitvityList() {
     return <Activity DTO={item} key={index} />;
   };
   return (
-    <FlatList
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-      data={activitites}
-      renderItem={renderActivity}
-      initialNumToRender={2}
+      <FlatList
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        data={activitites}
+        renderItem={renderActivity}
+        initialNumToRender={2}
       onEndReached={() => console.log("reached end")}
-    />
+      contentContainerStyle={{paddingBottom: 180}}
+      />
   );
 }
