@@ -29,7 +29,6 @@ export default function AcitvityList() {
           Authorization: "Bearer " + token,
         },
       };
-
       axios
         .request(config)
         .then((response) => {
@@ -38,9 +37,9 @@ export default function AcitvityList() {
         })
         .catch((error) => {
           console.log(error);
-        });
+        })
+        .finally(() => setRefreshing(false));
     }
-    setRefreshing(false);
   };
 
   useEffect(() => {

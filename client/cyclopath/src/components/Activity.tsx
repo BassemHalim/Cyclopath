@@ -57,7 +57,6 @@ export default function Activity(props: { DTO: ActivityDTO }) {
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
-        console.log("fetched image");
         const imageBlob = await response.blob();
         function blobToDataURL(blob: Blob, callback: any) {
           var a = new FileReader();

@@ -3,9 +3,8 @@ import { useState } from "react";
 import { useAuth } from "../hooks/AuthContext";
 
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Navigate } from "react-router-native";
 
-export default function SignUp() {
+export default function SignUp({ navigation }) {
   const [email, setEmail] = useState("");
   const [password1, setPassword1] = useState("");
   const [password2, setPassword2] = useState("");
@@ -32,9 +31,6 @@ export default function SignUp() {
     await register(email, password1);
   };
 
-  if (isAuthenticated) {
-    return <Navigate to="/" />;
-  }
   return (
     <SafeAreaView className="flex-1 flex-col items-center bg-black text-white justify-center">
       <View className="flex flex-col w-auto">

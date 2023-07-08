@@ -72,12 +72,10 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   activityStatsRow: {
-    // display: "flex",
     flex: 1,
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-around",
-    // margin: 5,
   },
   activityMap: {
     flex: 1,

@@ -4,9 +4,8 @@ import React from "react";
 import { styles } from "../Style";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../hooks/AuthContext";
-import { Link, Navigate } from "react-router-native";
 
-export default function SignIn() {
+export default function SignIn({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailValid, setEmailValid] = useState(true);
@@ -26,9 +25,6 @@ export default function SignIn() {
     }
   };
 
-  if (isAuthenticated) {
-    return <Navigate to="/" />;
-  }
 
   return (
     <SafeAreaView className="flex-1 flex-col items-center bg-black text-white justify-center">
@@ -75,11 +71,9 @@ export default function SignIn() {
           <Text className="text-white text-center">sign in</Text>
         </Pressable>
 
-        <Link to="/signup">
-          <View>
-            <Text className="text-white m-2">New here? create account</Text>
-          </View>
-        </Link>
+        <Pressable onPress={() => navigation.navigate("signup")}>
+          <Text className="text-white m-2">New here? create account</Text>
+        </Pressable>
       </View>
     </SafeAreaView>
   );

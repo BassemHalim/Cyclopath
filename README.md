@@ -15,10 +15,10 @@ Cycopath: A person suffering from chronic bike riding disorder with abnormal urg
     - [x] Sync activities from Garmin Connect
     - [x] Display weather info for every activity especially wind direction and speed
     - [x] Display the workout static map
-    - [ ] Monitor and display user progress over time (in progress)
-          ![img.png](img.png)
+    - [x] Monitor and display user progress over time 
+          <!-- ![img.png](img.png) -->
+  - **Future plans:**
     - [ ] plan and save routes using maps and weather forecast
-  - **Nice-to-have features:**
     - [ ] record activities from within app
     - [ ] add pictures to activities
     - [ ] personal heatmap with a game aspect to explore your city

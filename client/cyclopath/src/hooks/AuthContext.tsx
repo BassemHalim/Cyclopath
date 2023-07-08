@@ -59,8 +59,8 @@ export const UserProvider = ({ children }: AuthProviderProps) => {
         if (token) {
           const { exp }: any = jwt_decode(token);
           if (Date.now() / 1000 < exp) {
-            setIsAuthenticated(true);
             setToken(token);
+            setIsAuthenticated(true);
           }
         }
       })
@@ -75,8 +75,9 @@ export const UserProvider = ({ children }: AuthProviderProps) => {
       });
       if (response.status === 200) {
         const { token, username } = response.data;
-        setIsAuthenticated(true);
+        console.log('here')
         setToken(token);
+        setIsAuthenticated(true);
         await saveToken(token);
       } else {
         alert("invalid credentials");
@@ -95,8 +96,8 @@ export const UserProvider = ({ children }: AuthProviderProps) => {
       });
       if (response.status === 200) {
         const { token, username } = response.data;
-        setIsAuthenticated(true);
         setToken(token);
+        setIsAuthenticated(true);
         await saveToken(token);
       } else {
         alert("invalid credentials");
@@ -108,8 +109,9 @@ export const UserProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logout = () => {
-    setIsAuthenticated(false);
     setToken("");
+    saveToken("");
+    setIsAuthenticated(false);
   };
 
   return (
