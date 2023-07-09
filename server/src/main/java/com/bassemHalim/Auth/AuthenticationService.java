@@ -22,11 +22,6 @@ public class AuthenticationService {
 
 
     public AuthenticationResponse register(RegisterRequest request) {
-//        User user = User.builder()
-//                .email(request.getEmail())
-//                .password(passwordEncoder.encode(request.getPassword()))
-//                .role(Role.USER)
-//                .build();
         if (repository.getUserByEmail(request.getEmail()) == null) {
             User user = new User(request.getEmail(), passwordEncoder.encode(request.getPassword()), Role.USER);
             repository.saveUser(user);

@@ -142,19 +142,29 @@ public class SingleTableDB {
     /**
      * get at most the num_activities most recent activities of the user with UUID
      *
-     * @param num_activities, UUID
+     * @param num_activities  num activities to retrieve
+     * @param startActivityID activity id of last retrieved activity to use as offest use 0 to start from beginning
      * @return a list of the most recent <num_activities> activities
      */
-    public List<Activity> batchGetActivity(@Positive int num_activities, String UUID) {
+    public List<Activity> batchGetActivity(@Positive int num_activities, String UUID, long startActivityID) {
         Map<String, AttributeValue> attributeValueMap = new HashMap<>();
         attributeValueMap.put(":uuid", new AttributeValue().withS(UUID));
         attributeValueMap.put(":activity", new AttributeValue().withS("ACTIVITY#"));
+
+        Map<String, AttributeValue> startKey = null;
+        if (startActivityID != 0) {
+            startKey = new HashMap();
+            startKey.put("CyclopathPK", new AttributeValue(UUID));
+            startKey.put("CyclopathSK", new AttributeValue("ACTIVITY#" + startActivityID));
+        }
+
         DynamoDBQueryExpression<Activity> queryExpression =
                 new DynamoDBQueryExpression<Activity>()
                         .withLimit(num_activities)
                         .withScanIndexForward(false)
                         .withKeyConditionExpression("CyclopathPK = :uuid AND begins_with(CyclopathSK, :activity)")
-                        .withExpressionAttributeValues(attributeValueMap);
+                        .withExpressionAttributeValues(attributeValueMap)
+                        .withExclusiveStartKey(startKey);
 
         QueryResultPage<Activity> queryPage = dynamoDBMapper.queryPage(Activity.class,
                                                                        queryExpression,

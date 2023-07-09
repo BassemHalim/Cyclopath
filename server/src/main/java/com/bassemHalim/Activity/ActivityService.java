@@ -9,6 +9,7 @@ import com.bassemHalim.Repositoy.SingleTableDB;
 import com.bassemHalim.User.UserService;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -87,7 +88,7 @@ public class ActivityService {
         return metatdata.getYearlyHistory();
     }
 
-    public List<ActivityDTO> getActivityList(@NotNull @Positive int start,
+    public List<ActivityDTO> getActivityList(@NotNull @PositiveOrZero long startActivityID,
                                              @NotNull @Positive int limit,
                                              boolean sync) {
         if (sync) {
@@ -95,7 +96,7 @@ public class ActivityService {
         }
         List<Activity> activityList = repository.batchGetActivity(limit,
                                                                   UserService.getCurrentUser()
-                                                                          .getId());
+                                                                          .getId(), startActivityID);
 
         return ActivityMapper.MAPPER.ActivitytoDTOList(activityList);
     }
