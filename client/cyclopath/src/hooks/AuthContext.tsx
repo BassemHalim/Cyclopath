@@ -75,7 +75,6 @@ export const UserProvider = ({ children }: AuthProviderProps) => {
       });
       if (response.status === 200) {
         const { token, username } = response.data;
-        console.log('here')
         setToken(token);
         setIsAuthenticated(true);
         await saveToken(token);
