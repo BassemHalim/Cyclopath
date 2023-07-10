@@ -22,6 +22,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
+import static com.bassemHalim.Activity.Activity.getCompositeKeyPostfix;
+
 @Repository
 @RequiredArgsConstructor
 @Log
@@ -37,12 +39,15 @@ public class SingleTableDB {
                 dynamoDBMapper.save(user);
                 success = true;
             } catch (ProvisionedThroughputExceededException e) {
-                System.out.println("exceeded provisioned WCU going to sleep for a bit");
+                log.info("exceeded provisioned WCU going to sleep for a bit");
                 try {
                     TimeUnit.SECONDS.sleep(5);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                 }
+            } catch (Exception e) {
+                log.warning(e.getMessage());
+                return;
             }
         } while (!success);
     }
@@ -155,7 +160,7 @@ public class SingleTableDB {
         if (startActivityID != 0) {
             startKey = new HashMap();
             startKey.put("CyclopathPK", new AttributeValue(UUID));
-            startKey.put("CyclopathSK", new AttributeValue("ACTIVITY#" + startActivityID));
+            startKey.put("CyclopathSK", new AttributeValue("ACTIVITY#" + getCompositeKeyPostfix(startActivityID)));
         }
 
         DynamoDBQueryExpression<Activity> queryExpression =

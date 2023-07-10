@@ -60,7 +60,8 @@ public class DefaultExceptionHandler {
                                                     HttpServletRequest request) {
         APIError error = new APIError(
                 request.getRequestURI(),
-                "internal server error",
+                e.getMessage(),
+//                "internal server error",
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 LocalDateTime.now().toString()
         );

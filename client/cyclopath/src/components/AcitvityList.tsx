@@ -16,6 +16,7 @@ export default function AcitvityList() {
   const { token, isAuthenticated } = useAuth();
 
   const fetchData = async (garminSync: boolean, offsetAtivityID: number) => {
+    console.log(offsetAtivityID);
     let url = garminSync
       ? activityListURL + "&GarminSync=true"
       : activityListURL;
@@ -33,12 +34,13 @@ export default function AcitvityList() {
       axios
         .request(config)
         .then((response) => {
-          const activityList: ActivityDTO[] = response.data;
-          console.log("updating activities " + activityList.length);
-          if (garminSync) {
-            setActivities(activityList);
-          } else {
-            setActivities([...activitites, ...activityList]);
+          if (response.status == 200) {
+            const activityList: ActivityDTO[] = response.data;
+            if (garminSync) {
+              setActivities(activityList);
+            } else {
+              setActivities([...activitites, ...activityList]);
+            }
           }
         })
         .catch((error) => {
@@ -49,10 +51,10 @@ export default function AcitvityList() {
   };
 
   const fetchMoreActivities = async () => {
-    console.log("reached end");
     const last: ActivityDTO = activitites[activitites.length - 1];
-    fetchData(false, last.activityId);
+    await fetchData(false, last.activityId);
   };
+
   useEffect(() => {
     fetchData(false, 0);
   }, []);

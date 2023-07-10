@@ -42,4 +42,5 @@ build/
 mvnw
 mvnw.cmd
 pom.xml.bkp
+/ms-playwright
 

@@ -40,10 +40,4 @@ public class ActivityController {
         return ResponseEntity.ok("activity deleted");
     }
 
-
-//    @GetMapping("migrate")
-//    ResponseEntity<String> migrate() {
-//        activityService.updateSortKeys();
-//        return ResponseEntity.ok("done");
-//    }
 }

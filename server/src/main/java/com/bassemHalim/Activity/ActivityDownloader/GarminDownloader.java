@@ -1,10 +1,11 @@
 package com.bassemHalim.Activity.ActivityDownloader;
 
 
-import com.bassemHalim.Activity.ActivityDownloader.GarminActivityDTO.GarminActivityDTO;
 import com.bassemHalim.Activity.Activity;
+import com.bassemHalim.Activity.ActivityDownloader.GarminActivityDTO.GarminActivityDTO;
 import com.bassemHalim.Activity.ActivityDownloader.GarminActivityListItemDTO.ActivityListItemDTO;
 import com.bassemHalim.Activity.ActivityMapper;
+import com.bassemHalim.Repositoy.SingleTableDB;
 import com.bassemHalim.User.User;
 import com.bassemHalim.User.UserService;
 import com.bassemHalim.Utils.Compressor;
@@ -21,14 +22,12 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,16 +67,18 @@ public class GarminDownloader implements ActivityDownloader {
     private Page page;
     private final Browser browser;
 
+    @Autowired
+    private SingleTableDB repository;
 
     public boolean garminLogin() {
         // Login
         log.info("Logging in to Garmin");
-        Path statePath = Paths.get("state.json");
+//        Path statePath = Paths.get("state.json");
         BrowserContext context = browser.newContext();
-        if (Files.exists(statePath)) {
-            context = browser.newContext(
-                    new Browser.NewContextOptions().setStorageStatePath(statePath));
-        }
+//        if (useSavedToken && Files.exists(statePath)) {
+//            context = browser.newContext(
+//                    new Browser.NewContextOptions().setStorageStatePath(statePath));
+//        }
 
         this.page = context.newPage();
         page.route("**/*.{png,jpg,jpeg}", route -> route.abort());
@@ -108,7 +109,8 @@ public class GarminDownloader implements ActivityDownloader {
 //            this.access_token = request.allHeaders().get("authorization");
             User currentUser = UserService.getCurrentUser();
             currentUser.setBrowserState(context.storageState());
-            context.storageState(new BrowserContext.StorageStateOptions().setPath(statePath));
+            repository.saveUser(currentUser);
+//            context.storageState(new BrowserContext.StorageStateOptions().setPath(statePath));
             page.close();
         }
 
@@ -153,12 +155,9 @@ public class GarminDownloader implements ActivityDownloader {
         List<ActivityListItemDTO> activityList = new ArrayList<>();
         // get activity list
         User currentUser = UserService.getCurrentUser();
-        BrowserContext context = currentUser.getBrowserContext();
-        if (context == null) {
-            context =
-                    browser.newContext(new Browser.NewContextOptions().setStorageState(currentUser.getBrowserState()));
-            UserService.getCurrentUser().setBrowserContext(context);
-        }
+        BrowserContext context =
+                browser.newContext(new Browser.NewContextOptions().setStorageState(currentUser.getBrowserState()));
+
         APIResponse response = context.request().get(GARMIN_ACTIVITY_LIST_URL, RequestOptions.create()
                 .setQueryParam("limit", limit)
                 .setQueryParam("start", start)
@@ -190,12 +189,9 @@ public class GarminDownloader implements ActivityDownloader {
         }
         log.info("downloading Activity: " + ID);
         User currentUser = UserService.getCurrentUser();
-        BrowserContext context = currentUser.getBrowserContext();
-        if (context == null) {
-            context =
-                    browser.newContext(new Browser.NewContextOptions().setStorageState(currentUser.getBrowserState()));
-            UserService.getCurrentUser().setBrowserContext(context);
-        }
+        BrowserContext context =
+                browser.newContext(new Browser.NewContextOptions().setStorageState(currentUser.getBrowserState()));
+
         APIResponse response = context.request()
                 .get(GARMIN_ACTIVITY_SERVICE_URL + ID, RequestOptions.create()
                         .setHeader("authorization", "Bearer " + this.access_token)
@@ -231,16 +227,13 @@ public class GarminDownloader implements ActivityDownloader {
         }
         log.info("downloading GPX file for Activity: " + id);
         User currentUser = UserService.getCurrentUser();
-        BrowserContext context = currentUser.getBrowserContext();
-        if (context == null) {
-            context =
-                    browser.newContext(new Browser.NewContextOptions().setStorageState(currentUser.getBrowserState()));
-            UserService.getCurrentUser().setBrowserContext(context);
-        }
+        BrowserContext context =
+                browser.newContext(new Browser.NewContextOptions().setStorageState(currentUser.getBrowserState()));
+
         APIResponse response = context.request().get(GARMIN_ACTIVITY_GPX_URL + id, RequestOptions.create()
                 .setHeader("authorization", "Bearer " + this.access_token)
                 .setHeader("di-backend", "connectapi.garmin.com")
-                .setHeader("nk", "NT")
+                .setHeader("NK", "NT")
                 .setHeader("referer", "https://connect.garmin" +
                         ".com/modern/activity/" + id)
                 .setHeader("x-app-ver", "4.68.1.0")
@@ -248,6 +241,7 @@ public class GarminDownloader implements ActivityDownloader {
 
         if (!response.ok()) {
             log.warning("failed to fetch activity route for " + id);
+            log.info(response.statusText());
             throw new RuntimeException(response.statusText() + "couldn't download activity file");
         }
         String GPX = new String(response.body(), StandardCharsets.UTF_8);
@@ -261,6 +255,47 @@ public class GarminDownloader implements ActivityDownloader {
             throw new RuntimeException(e);
         }
 
+    }
+
+    public String getActivityRoute2(@NotNull @Positive long activityID) {
+        if (!tokenValid()) {
+            if (!garminLogin()) {
+                throw new RuntimeException("failed to garminLogin");
+            }
+        }
+        log.info("downloading geoJSON for Activity: " + activityID);
+        User currentUser = UserService.getCurrentUser();
+        BrowserContext context =
+                browser.newContext(new Browser.NewContextOptions().setStorageState(currentUser.getBrowserState()));
+
+        APIResponse response = context.request()
+                .get(GARMIN_ACTIVITY_SERVICE_URL + activityID + "/details?maxChartSize=2000&maxPolylineSize=4000",
+                     RequestOptions.create()
+                             .setHeader("authorization", "Bearer " + this.access_token)
+                             .setHeader("Accept", "application/json, text/javascript, */*; q=0.01")
+                             .setHeader("Accept-Encoding", "gzip, deflate, br")
+                             .setHeader("X-Requested-With", "XMLHttpRequest")
+                             .setHeader("Connection", "keep-alive")
+                             .setHeader("Sec-Fetch-Site", "same-origin")
+                             .setHeader("Sec-Fetch-Mode", "cors")
+                             .setHeader("Sec-Fetch-", "same-origin")
+                             .setHeader("Sec-Fetch-Dest", "empty")
+
+                             .setHeader("NK", "NT")
+                             .setHeader("x-app-ver", "4.68.2.0")
+                             .setHeader("di-backend", "connectapi.garmin.com")
+                             .setHeader("referer", "https://connect.garmin" +
+                                     ".com/modern/activity/" + activityID)
+                );
+
+        if (!response.ok()) {
+            log.warning("failed to fetch activity route for " + activityID);
+            log.info(response.text());
+            throw new RuntimeException(response.statusText() + "couldn't download activity file");
+        }
+        String geoJSON = new String(response.body(), StandardCharsets.UTF_8);
+
+        return geoJSON;
     }
 
     /**
@@ -278,18 +313,15 @@ public class GarminDownloader implements ActivityDownloader {
         log.info("downloading Weather for Activity: " + id);
 
         User currentUser = UserService.getCurrentUser();
-        BrowserContext context = currentUser.getBrowserContext();
-        if (context == null) {
-            context =
-                    browser.newContext(new Browser.NewContextOptions().setStorageState(currentUser.getBrowserState()));
-            UserService.getCurrentUser().setBrowserContext(context);
-        }
+        BrowserContext context =
+                browser.newContext(new Browser.NewContextOptions().setStorageState(currentUser.getBrowserState()));
+
         APIResponse response = context.request()
                 .get(GARMIN_ACTIVITY_SERVICE_URL + id.toString() + "/weather", RequestOptions.create()
                         .setHeader("authorization", "Bearer " + this.access_token)
                         .setHeader("di-backend", "connectapi.garmin.com")
                         .setHeader("dnt", "1")
-                        .setHeader("nk", "NT")
+                        .setHeader("NK", "NT")
                         .setHeader("referer", "https://connect.garmin.com/modern/activity/" + id)
                         .setHeader("x-app-ver", "4.66.1.1")
                 );

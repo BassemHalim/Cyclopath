@@ -1,7 +1,6 @@
 package com.bassemHalim.User;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.*;
-import com.microsoft.playwright.BrowserContext;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -54,9 +53,9 @@ public class User implements UserDetails {
     @DynamoDBAttribute(attributeName = "role")
     private Role role;
 
-    @DynamoDBIgnore
-    private BrowserContext browserContext;
-    @DynamoDBIgnore
+    //    @DynamoDBIgnore
+//    private BrowserContext browserContext;
+//    @DynamoDBIgnore
     private String browserState; // browser state: cookies + local storage
 
     private boolean isAccountNonExpired;

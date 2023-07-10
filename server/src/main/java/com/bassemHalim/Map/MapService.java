@@ -6,8 +6,8 @@ import com.bassemHalim.Activity.ActivityDownloader.GarminDownloader;
 import com.bassemHalim.Activity.ActivityService;
 import com.bassemHalim.Repositoy.MapRepository;
 import com.bassemHalim.Repositoy.SingleTableDB;
-import com.bassemHalim.Utils.CompositeKey;
 import com.bassemHalim.User.UserService;
+import com.bassemHalim.Utils.CompositeKey;
 import com.bassemHalim.Utils.Compressor;
 import com.mapbox.api.staticmap.v1.MapboxStaticMap;
 import com.mapbox.api.staticmap.v1.StaticMapCriteria;
@@ -118,7 +118,18 @@ public class MapService {
                     .geoJSON_zip(json)
                     .build();
             repository.saveRoute(route);
+
+
+//            String json = garminDownloader.getActivityRoute2(ID);
+//            Gson gson = new Gson();
+//            JsonObject response = gson.fromJson(json, JsonElement.class).getAsJsonObject();
+//            JsonObject geoJSONDTO = response.get("geoPolylineDTO").getAsJsonObject();
+//            JsonArray polyline = geoJSONDTO.get("polyline").getAsJsonArray();
+//            FeatureCollection collection = FeatureCollection.fromJson(polyline.getAsString());
+//
+//            System.out.println(collection);
         }
+//        System.out.println(route);
         return route;
     }
 }

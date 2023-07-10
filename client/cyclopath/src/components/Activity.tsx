@@ -37,6 +37,8 @@ export default function Activity(props: { DTO: ActivityDTO }) {
 
   useEffect(() => {
     const fetchImageWithRedirect = async () => {
+      var retry = 0;
+      var timeout = 5000;
       try {
         var myHeaders = new Headers();
         myHeaders.append("Authorization", "Bearer " + token);
@@ -64,7 +66,12 @@ export default function Activity(props: { DTO: ActivityDTO }) {
           setImageurl(dataurl);
         });
       } catch (error) {
-        console.error("Error fetching image:", error);
+        console.info("Error fetching image:", error);
+        if (retry < 2) {
+          setTimeout(fetchImageWithRedirect, timeout);
+          timeout *= 2;
+          retry++;
+        }
       }
     };
     fetchImageWithRedirect();
